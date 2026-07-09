@@ -124,7 +124,7 @@
   @media(max-width:900px){ .grid-2{ grid-template-columns:1fr; } }
   canvas{ max-height:320px; }
 
-  /* Ingredients Grid (All Materials) */
+  /* Ingredients Grid */
   .ingred-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 10px; }
   .ingred-grid::-webkit-scrollbar { width: 6px; }
   .ingred-grid::-webkit-scrollbar-thumb { background: var(--line); border-radius: 10px; }
@@ -159,7 +159,7 @@
       <div class="brand-mark"></div>
       <div class="brand-text">
         <h1>Dashboard Supervisor Pakan</h1>
-        <p>Live Data dari Google Sheets · Smart Tracker v2</p>
+        <p>Live Data dari Google Sheets · Section-Based Update</p>
       </div>
     </div>
     <div class="status-row">
@@ -180,9 +180,9 @@
       <select id="dateTo"></select>
     </div>
     <div class="field">
-      <label>Phase Kandang</label>
-      <select id="phaseFilter">
-        <option value="ALL">Semua Phase</option>
+      <label>Section Kandang</label>
+      <select id="sectionFilter">
+        <option value="ALL">Semua Section</option>
       </select>
     </div>
   </div>
@@ -206,9 +206,9 @@
         <div class="sub">Total pakan / Jumlah hari</div>
       </div>
       <div class="kpi">
-        <div class="label">Phase Konsumsi Terbesar</div>
-        <div class="value" id="kpiTopPhase">–</div>
-        <div class="sub" id="kpiTopPhaseSub">–</div>
+        <div class="label">Section Konsumsi Terbesar</div>
+        <div class="value" id="kpiTopSection">–</div>
+        <div class="sub" id="kpiTopSectionSub">–</div>
       </div>
     </div>
 
@@ -219,8 +219,8 @@
 
     <div class="grid-2">
       <div class="panel">
-        <div class="section-title"><span class="num">02</span> Komparasi Usage per Phase (Kg)</div>
-        <canvas id="phaseBarChart"></canvas>
+        <div class="section-title"><span class="num">02</span> Komparasi Usage per Section (Fresh, Early, Late, dll)</div>
+        <canvas id="sectionBarChart"></canvas>
       </div>
       <div class="panel">
         <div class="section-title"><span class="num">03</span> Distribusi Waktu Pemberian (Shift)</div>
@@ -237,7 +237,7 @@
     <div class="panel">
       <div class="section-title"><span class="num">05</span> Data Log Rinci (Report All)</div>
       <div class="table-controls">
-        <input type="text" id="searchBox" placeholder="Cari phase / shift / tanggal…" style="min-width:240px;">
+        <input type="text" id="searchBox" placeholder="Cari section / shift / tanggal…" style="min-width:240px;">
       </div>
       <div class="table-scroll">
         <table>
@@ -261,11 +261,9 @@
 
 <script>
 const SHEET_ID = '1-2wG1wWuN6AFAoS5xNfoM4l_xYVszSWUcHQ-6pFScKI';
-const currentGid = '555405306'; // Fix ke tab Report All
+const currentGid = '555405306'; // Tab Report All
 
 const INGREDIENT_COLS = ['Oaten hay','Alfalfa','Indigofera','Sisa Pakan','Rumput Odot','Tebon Jagung','Corn Silage','SBM','Wheat Pollard','DDGS','CGF','Bungkil Kopra','Bungkil Sawit','Ampok Jagung','Canola','CFP','Soy Bean Cake','Palm Kernel Dry','Rice DDGS','Garam','Molases','Air','DCP','Limestone','Netral AHA','Sodium Bicarbonate','Premix Lact','Premix Trans','Premix Dry','Nutricab','Bentonite'];
-
-// Daftar bahan yang dikategorikan sebagai Hijauan/Kasar (Selain ini dianggap Konsentrat/Mineral)
 const FORAGES = ['Oaten hay','Alfalfa','Indigofera','Rumput Odot','Tebon Jagung','Corn Silage'];
 
 let rawRows = [];
@@ -321,14 +319,14 @@ async function loadData(){
 
   try{
     const res = await fetch(url);
-    if(!res.ok) throw new Error('HTTP ' + res.status);
+    if(!res.ok) throw new Error('HTTP Error: ' + res.status);
     const text = await res.text();
-    if(text.trim().startsWith('<')) throw new Error('NOTPUBLIC');
+    if(text.trim().startsWith('<')) throw new Error('Akses ditolak (Bukan Publik)');
     processCSV(text);
     setStatus('live', 'Live · diperbarui ' + new Date().toLocaleTimeString('id-ID'));
   }catch(err){
     setStatus('err', 'Gagal memuat data');
-    showError(`<b>Terjadi kesalahan:</b> ${err.message}`);
+    showError(`<b>Terjadi Kesalahan:</b> <code>${err.message}</code><br>Pastikan Google Sheets Anda sudah diatur menjadi <b>Anyone with the link</b>.`);
     $('loadingMsg').style.display = 'none';
   }
 }
@@ -338,22 +336,16 @@ function processCSV(text){
   const rows = parsed.data;
   if(rows.length === 0) throw new Error('Data Spreadsheet kosong.');
   
-  // PENCARIAN HEADER SUPER AGRESIF
-  // Mencari baris yang mengandung bahan pakan, mengabaikan struktur aneh Gviz
   let headerIdx = rows.findIndex(r => {
       let rowText = r.join(' ').toLowerCase();
       return rowText.includes('tebon') && rowText.includes('sbm');
   });
 
   if(headerIdx === -1) {
-      // Tampilkan 2 baris awal ke layar jika gagal agar ketahuan apa masalahnya
-      let debugInfo = rows.slice(0, 2).map(r => r.slice(0, 5).join(' | ')).join(' --- ');
-      throw new Error(`Header kolom bahan pakan tidak ditemukan. Info: ${debugInfo}`);
+      throw new Error(`Gagal mendeteksi kolom bahan pakan di tab Report All.`);
   }
 
   const headers = rows[headerIdx].map(h => String(h).trim().replace(/\n/g, ' '));
-  
-  // Paksa set 4 nama kolom utama di depan (antisipasi Gviz membuang header kolom)
   headers[0] = 'Date';
   headers[1] = 'Section';
   headers[2] = 'Phase';
@@ -367,7 +359,7 @@ function processCSV(text){
       const dateRaw = String(r[0]).trim();
       const dateObj = parseDate(dateRaw);
       
-      if (!dateObj) continue; // Abaikan jika baris bukan log harian (misal baris total)
+      if (!dateObj) continue; 
 
       const obj = {};
       
@@ -378,28 +370,36 @@ function processCSV(text){
           if (hIdx !== -1 && hIdx < r.length) {
               val = parseNum(r[hIdx]);
           }
-          obj[col] = val; // Simpan ke object
-          
+          obj[col] = val; 
           total += val;
           if(FORAGES.includes(col)) forage += val;
           else if(col !== 'Air' && col !== 'Sisa Pakan') conc += val;
       });
 
-      let ph = (r[2] || '').trim().toUpperCase();
-      if (!ph || ph === '-') ph = 'TIDAK DIKETAHUI';
+      // MENGUBAH PENGELOMPOKAN DARI PHASE KE SECTION
+      let sec = (r[1] || '').trim().toUpperCase();
+      if (!sec || sec === '-') sec = 'LAINNYA';
+      
+      // Standardisasi Nama Section agar rapi
+      if(sec.includes('FRESH')) sec = 'FRESH';
+      else if(sec.includes('EARLY')) sec = 'EARLY';
+      else if(sec.includes('LATE')) sec = 'LATE';
+      else if(sec.includes('DRY')) sec = 'DRY';
+      else if(sec.includes('YEARLING')) sec = 'YEARLING';
+      else if(sec.includes('HR')) sec = 'HR';
       
       let tm = (r[3] || '').trim().toUpperCase();
       if (!tm || tm === '-') tm = 'TIDAK DIKETAHUI';
 
       rawRows.push({
           dateStr: dateRaw, date: dateObj,
-          phase: ph, time: tm,
+          section: sec, time: tm, // Menggunakan section, bukan phase
           total: total, forage: forage, conc: conc, raw: obj
       });
   }
 
   if (rawRows.length === 0) {
-      throw new Error("Data ditemukan, namun gagal diproses. Pastikan format tabel sesuai.");
+      throw new Error("Data tabel ditemukan, namun angka-angka tidak terbaca.");
   }
 
   populateFilters();
@@ -416,25 +416,25 @@ function populateFilters(){
   fromSel.value = dates[Math.max(0, dates.length - 14)];
   toSel.value = dates[dates.length-1];
 
-  const phases = [...new Set(rawRows.map(r=>r.phase))].filter(p => p !== 'TIDAK DIKETAHUI');
-  $('phaseFilter').innerHTML = '<option value="ALL">Semua Phase</option>' + phases.map(p=>`<option value="${p}">${p}</option>`).join('');
+  const sections = [...new Set(rawRows.map(r=>r.section))].filter(s => s !== 'LAINNYA');
+  $('sectionFilter').innerHTML = '<option value="ALL">Semua Section</option>' + sections.map(s=>`<option value="${s}">${s}</option>`).join('');
 }
 
 function applyFiltersAndRender(){
   const fromD = parseDate($('dateFrom').value);
   const toD = parseDate($('dateTo').value);
-  const ph = $('phaseFilter').value;
+  const sec = $('sectionFilter').value;
 
   filteredRows = rawRows.filter(r => {
     if(fromD && r.date < fromD) return false;
     if(toD && r.date > toD) return false;
-    if(ph !== 'ALL' && r.phase !== ph) return false;
+    if(sec !== 'ALL' && r.section !== sec) return false;
     return true;
   });
 
   renderKPIs();
   renderTrendChart();
-  renderPhaseBarChart();
+  renderSectionBarChart();
   renderTimeChart();
   renderAllIngredients();
   tablePage = 0;
@@ -461,13 +461,13 @@ function renderKPIs(){
       $('kpiRatio').innerHTML = `- : -`;
   }
 
-  // Top Phase
-  const byPhase = {};
-  filteredRows.forEach(r => { byPhase[r.phase] = (byPhase[r.phase]||0) + r.total; });
-  const top = Object.entries(byPhase).sort((a,b)=>b[1]-a[1])[0];
+  // Top Section
+  const bySection = {};
+  filteredRows.forEach(r => { bySection[r.section] = (bySection[r.section]||0) + r.total; });
+  const top = Object.entries(bySection).sort((a,b)=>b[1]-a[1])[0];
   if(top){
-    $('kpiTopPhase').textContent = top[0];
-    $('kpiTopPhaseSub').textContent = fmtNum(top[1]) + ' kg total pemakaian';
+    $('kpiTopSection').textContent = top[0];
+    $('kpiTopSectionSub').textContent = fmtNum(top[1]) + ' kg total pemakaian';
   }
 }
 
@@ -503,15 +503,20 @@ function renderTrendChart(){
   });
 }
 
-function renderPhaseBarChart(){
+function renderSectionBarChart(){
   const c = chartColors();
-  const byPhase = {};
-  filteredRows.forEach(r => { byPhase[r.phase] = (byPhase[r.phase]||0) + r.total; });
-  delete byPhase['TIDAK DIKETAHUI'];
-  const entries = Object.entries(byPhase).sort((a,b)=>b[1]-a[1]);
+  const bySection = {};
+  filteredRows.forEach(r => { bySection[r.section] = (bySection[r.section]||0) + r.total; });
+  delete bySection['LAINNYA'];
+  
+  const entries = Object.entries(bySection);
+  
+  // Mengurutkan bar chart sesuai siklus hidup sapi agar rapi di grafik
+  const logicalOrder = {'FRESH':1, 'EARLY':2, 'LATE':3, 'DRY':4, 'YEARLING':5, 'HR':6};
+  entries.sort((a,b) => (logicalOrder[a[0]] || 99) - (logicalOrder[b[0]] || 99));
 
-  destroyChart('phaseBar');
-  charts.phaseBar = new Chart($('phaseBarChart'), {
+  destroyChart('sectionBar');
+  charts.sectionBar = new Chart($('sectionBarChart'), {
     type:'bar',
     data:{ 
       labels: entries.map(e=>e[0]), 
@@ -534,7 +539,6 @@ function renderTimeChart(){
   delete totals['TIDAK DIKETAHUI'];
   const entries = Object.entries(totals).filter(e=>e[1]>0);
 
-  // Paksa urutan jika Pagi Siang Malam
   const order = {'PAGI':1, 'SIANG':2, 'MALAM':3};
   entries.sort((a,b) => (order[a[0]]||9) - (order[b[0]]||9));
 
@@ -560,7 +564,6 @@ function renderAllIngredients(){
     INGREDIENT_COLS.forEach(col => { totals[col] += (r.raw[col] || 0); });
   });
   
-  // Sort dari yang pemakaiannya terbesar ke terkecil, buang yang 0
   const sorted = Object.entries(totals).filter(e => e[1] > 0).sort((a,b) => b[1] - a[1]);
   
   const grid = $('allIngredientsGrid');
@@ -578,14 +581,13 @@ function renderAllIngredients(){
 }
 
 function renderTable(){
-  // Tampilkan bahan paling umum saja di tabel log, sisanya di grid atas
-  const displayCols = ['Date','Phase','Time','Tebon Jagung','Corn Silage','SBM','Total'];
+  const displayCols = ['Date','Section','Time','Tebon Jagung','Corn Silage','SBM','Total'];
   $('tableHead').innerHTML = displayCols.map(c=>`<th>${c}</th>`).join('');
 
   const search = $('searchBox').value.trim().toLowerCase();
   let rows = filteredRows;
   if(search){
-    rows = rows.filter(r => (r.dateStr+r.phase+r.time).toLowerCase().includes(search));
+    rows = rows.filter(r => (r.dateStr+r.section+r.time).toLowerCase().includes(search));
   }
   rows = [...rows].sort((a,b)=> b.date - a.date);
 
@@ -594,7 +596,7 @@ function renderTable(){
 
   $('tableBody').innerHTML = pageRows.map(r => `
     <tr>
-      <td>${r.dateStr}</td><td>${r.phase}</td><td>${r.time}</td>
+      <td>${r.dateStr}</td><td>${r.section}</td><td>${r.time}</td>
       <td class="num">${fmtNum(r.raw['Tebon Jagung'] || 0)}</td>
       <td class="num">${fmtNum(r.raw['Corn Silage'] || 0)}</td>
       <td class="num">${fmtNum(r.raw['SBM'] || 0)}</td>
@@ -611,7 +613,7 @@ function renderTable(){
 $('refreshBtn').addEventListener('click', loadData);
 $('dateFrom').addEventListener('change', applyFiltersAndRender);
 $('dateTo').addEventListener('change', applyFiltersAndRender);
-$('phaseFilter').addEventListener('change', applyFiltersAndRender);
+$('sectionFilter').addEventListener('change', applyFiltersAndRender);
 $('searchBox').addEventListener('input', ()=>{ tablePage=0; renderTable(); });
 $('prevPage').addEventListener('click', ()=>{ if(tablePage>0){tablePage--; renderTable();} });
 $('nextPage').addEventListener('click', ()=>{ tablePage++; renderTable(); });
