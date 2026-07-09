@@ -159,7 +159,7 @@
       <div class="brand-mark"></div>
       <div class="brand-text">
         <h1>Dashboard Supervisor Pakan</h1>
-        <p>Live Data dari Google Sheets · Report All</p>
+        <p>Live Data dari Google Sheets · Smart Tracker v2</p>
       </div>
     </div>
     <div class="status-row">
@@ -328,7 +328,7 @@ async function loadData(){
     setStatus('live', 'Live · diperbarui ' + new Date().toLocaleTimeString('id-ID'));
   }catch(err){
     setStatus('err', 'Gagal memuat data');
-    showError(`<b>Terjadi kesalahan koneksi.</b> Pastikan Sheets diset "Anyone with the link".`);
+    showError(`<b>Terjadi kesalahan:</b> ${err.message}`);
     $('loadingMsg').style.display = 'none';
   }
 }
@@ -336,43 +336,70 @@ async function loadData(){
 function processCSV(text){
   const parsed = Papa.parse(text, {skipEmptyLines:true});
   const rows = parsed.data;
+  if(rows.length === 0) throw new Error('Data Spreadsheet kosong.');
   
-  let headerIdx = rows.findIndex(r => r.some(cell => String(cell).trim().toLowerCase() === 'date'));
-  if(headerIdx === -1) throw new Error('Tidak menemukan header Date.');
+  // PENCARIAN HEADER SUPER AGRESIF
+  // Mencari baris yang mengandung bahan pakan, mengabaikan struktur aneh Gviz
+  let headerIdx = rows.findIndex(r => {
+      let rowText = r.join(' ').toLowerCase();
+      return rowText.includes('tebon') && rowText.includes('sbm');
+  });
+
+  if(headerIdx === -1) {
+      // Tampilkan 2 baris awal ke layar jika gagal agar ketahuan apa masalahnya
+      let debugInfo = rows.slice(0, 2).map(r => r.slice(0, 5).join(' | ')).join(' --- ');
+      throw new Error(`Header kolom bahan pakan tidak ditemukan. Info: ${debugInfo}`);
+  }
 
   const headers = rows[headerIdx].map(h => String(h).trim().replace(/\n/g, ' '));
-  const dataRows = rows.slice(headerIdx + 1);
+  
+  // Paksa set 4 nama kolom utama di depan (antisipasi Gviz membuang header kolom)
+  headers[0] = 'Date';
+  headers[1] = 'Section';
+  headers[2] = 'Phase';
+  headers[3] = 'Time';
 
+  const dataRows = rows.slice(headerIdx + 1);
   rawRows = [];
   
   for (let i = 0; i < dataRows.length; i++) {
       const r = dataRows[i];
       const dateRaw = String(r[0]).trim();
       const dateObj = parseDate(dateRaw);
-      if (!dateObj || dateRaw.toLowerCase() === 'date') continue;
+      
+      if (!dateObj) continue; // Abaikan jika baris bukan log harian (misal baris total)
 
       const obj = {};
-      headers.forEach((h, idx) => { if(h) obj[h] = r[idx]; });
-
+      
       let total = 0, forage = 0, conc = 0;
       INGREDIENT_COLS.forEach(col => {
-          const val = parseNum(obj[col]);
+          let hIdx = headers.findIndex(h => h.toLowerCase() === col.toLowerCase());
+          let val = 0;
+          if (hIdx !== -1 && hIdx < r.length) {
+              val = parseNum(r[hIdx]);
+          }
+          obj[col] = val; // Simpan ke object
+          
           total += val;
-          // Pemisahan Hijauan dan Konsentrat untuk KPI Supervisor
           if(FORAGES.includes(col)) forage += val;
           else if(col !== 'Air' && col !== 'Sisa Pakan') conc += val;
       });
 
-      let ph = (obj['Phase'] || obj['PHASE'] || '').trim().toUpperCase();
-      if (!ph) ph = '-';
-      let tm = (obj['Time'] || obj['TIME'] || '').trim().toUpperCase();
-      if (!tm) tm = '-';
+      let ph = (r[2] || '').trim().toUpperCase();
+      if (!ph || ph === '-') ph = 'TIDAK DIKETAHUI';
+      
+      let tm = (r[3] || '').trim().toUpperCase();
+      if (!tm || tm === '-') tm = 'TIDAK DIKETAHUI';
 
       rawRows.push({
           dateStr: dateRaw, date: dateObj,
           phase: ph, time: tm,
           total: total, forage: forage, conc: conc, raw: obj
       });
+  }
+
+  if (rawRows.length === 0) {
+      throw new Error("Data ditemukan, namun gagal diproses. Pastikan format tabel sesuai.");
   }
 
   populateFilters();
@@ -389,7 +416,7 @@ function populateFilters(){
   fromSel.value = dates[Math.max(0, dates.length - 14)];
   toSel.value = dates[dates.length-1];
 
-  const phases = [...new Set(rawRows.map(r=>r.phase))].filter(p => p !== '-');
+  const phases = [...new Set(rawRows.map(r=>r.phase))].filter(p => p !== 'TIDAK DIKETAHUI');
   $('phaseFilter').innerHTML = '<option value="ALL">Semua Phase</option>' + phases.map(p=>`<option value="${p}">${p}</option>`).join('');
 }
 
@@ -480,8 +507,7 @@ function renderPhaseBarChart(){
   const c = chartColors();
   const byPhase = {};
   filteredRows.forEach(r => { byPhase[r.phase] = (byPhase[r.phase]||0) + r.total; });
-  // Hapus baris kosong/strip
-  delete byPhase['-'];
+  delete byPhase['TIDAK DIKETAHUI'];
   const entries = Object.entries(byPhase).sort((a,b)=>b[1]-a[1]);
 
   destroyChart('phaseBar');
@@ -505,7 +531,7 @@ function renderTimeChart(){
   const c = chartColors();
   const totals = {};
   filteredRows.forEach(r => { totals[r.time] = (totals[r.time]||0) + r.total; });
-  delete totals['-'];
+  delete totals['TIDAK DIKETAHUI'];
   const entries = Object.entries(totals).filter(e=>e[1]>0);
 
   // Paksa urutan jika Pagi Siang Malam
@@ -531,7 +557,7 @@ function renderAllIngredients(){
   INGREDIENT_COLS.forEach(col => totals[col] = 0);
   
   filteredRows.forEach(r => {
-    INGREDIENT_COLS.forEach(col => { totals[col] += parseNum(r.raw[col]); });
+    INGREDIENT_COLS.forEach(col => { totals[col] += (r.raw[col] || 0); });
   });
   
   // Sort dari yang pemakaiannya terbesar ke terkecil, buang yang 0
@@ -569,9 +595,9 @@ function renderTable(){
   $('tableBody').innerHTML = pageRows.map(r => `
     <tr>
       <td>${r.dateStr}</td><td>${r.phase}</td><td>${r.time}</td>
-      <td class="num">${fmtNum(parseNum(r.raw['Tebon Jagung']))}</td>
-      <td class="num">${fmtNum(parseNum(r.raw['Corn Silage']))}</td>
-      <td class="num">${fmtNum(parseNum(r.raw['SBM']))}</td>
+      <td class="num">${fmtNum(r.raw['Tebon Jagung'] || 0)}</td>
+      <td class="num">${fmtNum(r.raw['Corn Silage'] || 0)}</td>
+      <td class="num">${fmtNum(r.raw['SBM'] || 0)}</td>
       <td class="num">${fmtNum(r.total)}</td>
     </tr>`).join('') || '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-faint);">Tidak ada data.</td></tr>';
 
