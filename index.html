@@ -151,7 +151,7 @@
 
   canvas{ max-height:320px; }
 
-  /* Silo visualization - signature element */
+  /* Silo visualization */
   .silo-row{ display:flex; gap:22px; align-items:flex-end; justify-content:space-around; padding: 10px 6px 4px; flex-wrap:wrap; }
   .silo-unit{ display:flex; flex-direction:column; align-items:center; gap:10px; flex:1; min-width:70px; }
   .silo-body{
@@ -176,7 +176,7 @@
     content:''; position:absolute; inset:0;
     background-image: repeating-linear-gradient(180deg, rgba(0,0,0,0.08) 0 2px, transparent 2px 7px);
   }
-  .silo-name{ font-family:var(--font-body); font-weight:600; font-size:12.5px; color:var(--text); }
+  .silo-name{ font-family:var(--font-body); font-weight:600; font-size:12.5px; color:var(--text); text-align:center; }
   .silo-value{ font-family:var(--font-mono); font-size:12px; color:var(--wheat-soft); }
   .silo-sub{ font-family:var(--font-mono); font-size:10.5px; color:var(--text-faint); }
 
@@ -212,7 +212,7 @@
       <div class="brand-mark"></div>
       <div class="brand-text">
         <h1>Silo — Monitor Usage Pakan</h1>
-        <p>Live dari Google Sheets · Perhitungan Usage</p>
+        <p>Live dari Google Sheets · Advanced Parser</p>
       </div>
     </div>
     <div class="status-row">
@@ -242,7 +242,7 @@
   </div>
 
   <div class="settings-panel" id="settingsPanel">
-    Dashboard ini mengambil data langsung dari tab <b>Usage Tebon</b> (gid <code>1157965826</code>) pada spreadsheet <b>Perhitungan Usage</b> setiap kali dibuka atau di-refresh. Untuk memonitor tab lain (WHS, Report, Intake/Hd, dll), tempel GID tab tersebut di bawah ini — bisa dilihat di URL Google Sheets setelah <code>#gid=</code>.
+    Dashboard ini mengambil data langsung dari spreadsheet. Silakan tempel GID tab dari URL (setelah <code>#gid=</code>) di bawah ini.
     <div class="row">
       <input type="text" id="gidInput" placeholder="GID tab, mis. 1157965826">
       <button class="refresh" id="applyGid">Terapkan &amp; refresh</button>
@@ -321,7 +321,8 @@
 
 <script>
 const SHEET_ID = '1-2wG1wWuN6AFAoS5xNfoM4l_xYVszSWUcHQ-6pFScKI';
-let currentGid = '1157965826';
+// GID Default diarahkan ke tab Usage Tebon
+let currentGid = '1157965826'; 
 
 const INGREDIENT_COLS = ['Oaten hay','Alfalfa','Indigofera','Sisa Pakan','Rumput Odot','Tebon Jagung','Corn Silage','SBM','Wheat Pollard','DDGS','CGF','Bungkil Kopra','Bungkil Sawit','Ampok Jagung','Canola','CFP','Soy Bean Cake','Palm Kernel Dry','Rice DDGS','Garam','Molases','Air','DCP','Limestone','Netral AHA','Sodium Bicarbonate','Premix Lact','Premix Trans','Premix Dry','Nutricab','Bentonite'];
 
@@ -353,13 +354,13 @@ function parseNum(v){
 }
 
 function parseDate(s){
-  // format: "01 Jun 26"
   if(!s) return null;
-  const parts = s.trim().split(' ');
+  const parts = s.trim().split(/[\s-]+/);
   if(parts.length < 3) return null;
   const months = {Jan:0,Feb:1,Mar:2,Apr:3,Mei:4,May:4,Jun:5,Jul:6,Agu:7,Aug:7,Sep:8,Okt:9,Oct:9,Nov:10,Des:11,Dec:11};
   const day = parseInt(parts[0],10);
-  const mon = months[parts[1]];
+  const monStr = parts[1].length > 3 ? parts[1].substring(0,3) : parts[1];
+  const mon = months[monStr] !== undefined ? months[monStr] : months[parts[1]];
   let yr = parseInt(parts[2],10);
   yr = yr < 100 ? 2000+yr : yr;
   if(mon === undefined || isNaN(day)) return null;
@@ -388,42 +389,121 @@ async function loadData(){
   }catch(err){
     console.error(err);
     setStatus('err', 'Gagal memuat data');
-    showError(`<b>Tidak bisa mengambil data live dari Google Sheets.</b><br>
-      Kemungkinan penyebab: sheet belum dibagikan sebagai "Anyone with the link — Viewer", atau GID tab tidak valid.<br>
-      Buka Google Sheets → tombol <b>Share</b> → set ke "Anyone with the link can view", lalu klik Refresh di atas.`);
-    $('loadingMsg').style.display = 'block';
-    $('loadingMsg').textContent = 'Menunggu akses ke data…';
+    if(err.message === 'NOTPUBLIC'){
+      showError(`<b>Akses Ditolak.</b><br>Pastikan Google Sheets sudah diset ke "Anyone with the link can view".`);
+    } else if(err.message === 'NOHEADER' || err.message === 'EMPTY'){
+      showError(`<b>Format tabel tidak dikenali.</b><br>Sistem tidak dapat menemukan header yang sesuai. Pastikan GID tab yang dimasukkan memuat tabel data.`);
+    } else {
+      showError(`<b>Terjadi kesalahan:</b> ${err.message}`);
+    }
+    $('loadingMsg').style.display = 'none';
   }
 }
 
 function processCSV(text){
   const parsed = Papa.parse(text, {skipEmptyLines:true});
   const rows = parsed.data;
-  let headerIdx = rows.findIndex(r => r[0] && r[0].trim() === 'Date');
+  
+  // Deteksi letak header Date (antisipasi spasi dan besar/kecil)
+  let headerIdx = rows.findIndex(r => r[0] && String(r[0]).trim().toLowerCase() === 'date');
   if(headerIdx === -1) throw new Error('NOHEADER');
-  const headers = rows[headerIdx].map(h => h.trim());
-  const dataRows = rows.slice(headerIdx+1);
+  
+  // Bersihkan teks header dari enter (\n) yang tersembunyi
+  const headers1 = rows[headerIdx].map(h => String(h).trim().replace(/\n/g, ' '));
+  const headers2 = rows.length > headerIdx + 1 ? rows[headerIdx + 1].map(h => String(h).trim().replace(/\n/g, ' ')) : [];
 
+  // Deteksi apakah ini tab "Usage Tebon" yang tulisan headernya sering ada enters/newline
+  const isUsageTebon = headers1.some(h => h.toLowerCase().includes('usage tebon'));
+
+  // Tentukan baris dimulainya data asli (lewati sub-header jika ada)
+  let dataStartIdx = headerIdx + 1;
+  if (headers2.some(h => ['fresh','early','late','dry','yearling'].includes(h.toLowerCase()))) {
+      dataStartIdx = headerIdx + 2; 
+  }
+  
+  const dataRows = rows.slice(dataStartIdx);
   rawRows = [];
-  for(const r of dataRows){
-    if(!r[0] || !r[0].trim()) continue;
-    const obj = {};
-    headers.forEach((h,i) => obj[h] = r[i]);
-    const dateObj = parseDate(obj['Date']);
-    if(!dateObj) continue;
-    let total = 0;
-    INGREDIENT_COLS.forEach(col => { total += parseNum(obj[col]); });
-    rawRows.push({
-      dateStr: obj['Date'].trim(),
-      date: dateObj,
-      section: (obj['Section']||'').trim(),
-      phase: (obj['Phase']||'').trim(),
-      time: (obj['Time']||'').trim(),
-      tebon: parseNum(obj['Tebon Jagung']),
-      konsentrat: parseNum(obj['Konsentrat']),
-      total: total,
-      raw: obj
+  
+  if (isUsageTebon) {
+    // PROSES TAB REKAP (USAGE TEBON)
+    const phases = ['Fresh', 'Early', 'Late', 'Dry', 'Yearling'];
+    const phaseMap = {};
+    
+    phases.forEach(p => {
+         // Cari letak kolom per phase (cek baris 2 dulu, lalu baris 1)
+         let idx = headers2.findIndex(h => h.toLowerCase() === p.toLowerCase());
+         if (idx === -1) idx = headers1.findIndex(h => h.toLowerCase() === p.toLowerCase());
+         
+         // Jika nama terhapus, pasang backup index manual kolom C(2) sampai G(6)
+         if (idx === -1) {
+             if(p==='Fresh') idx = 2;
+             if(p==='Early') idx = 3;
+             if(p==='Late') idx = 4;
+             if(p==='Dry') idx = 5;
+             if(p==='Yearling') idx = 6;
+         }
+         phaseMap[p] = idx;
     });
+
+    for(const r of dataRows){
+      const dateRaw = String(r[0]).trim();
+      if(!dateRaw) continue;
+      const dateObj = parseDate(dateRaw);
+      if(!dateObj) continue;
+
+      phases.forEach(pName => {
+         const idx = phaseMap[pName];
+         if(idx !== -1 && idx < r.length) {
+             const val = parseNum(r[idx]);
+             if(val > 0) {
+                 rawRows.push({
+                     dateStr: dateRaw,
+                     date: dateObj,
+                     section: 'Tebon (All)',
+                     phase: pName,
+                     time: '-',
+                     tebon: val,
+                     konsentrat: 0,
+                     total: val,
+                     raw: {}
+                 });
+             }
+         }
+      });
+    }
+  } else {
+    // PROSES TAB RINCIAN HARIAN LAINNYA
+    for(const r of dataRows){
+      const dateRaw = String(r[0]).trim();
+      if(!dateRaw) continue;
+      const dateObj = parseDate(dateRaw);
+      if(!dateObj) continue;
+
+      const obj = {};
+      headers1.forEach((h,i) => obj[h] = r[i]);
+      
+      let total = 0;
+      let hasIngreds = false;
+      INGREDIENT_COLS.forEach(col => { 
+        const val = parseNum(obj[col]);
+        total += val; 
+        if(val > 0) hasIngreds = true;
+      });
+      
+      const tebonVal = parseNum(obj['Tebon Jagung']);
+      
+      rawRows.push({
+        dateStr: dateRaw,
+        date: dateObj,
+        section: (obj['Section']||'').trim() || 'General',
+        phase: (obj['Phase']||'').trim() || '-',
+        time: (obj['Time']||'').trim() || '-',
+        tebon: tebonVal,
+        konsentrat: parseNum(obj['Konsentrat']),
+        total: hasIngreds ? total : tebonVal, 
+        raw: obj
+      });
+    }
   }
 
   if(rawRows.length === 0) throw new Error('EMPTY');
@@ -441,7 +521,7 @@ function populateFilters(){
   const fromSel = $('dateFrom'), toSel = $('dateTo');
   fromSel.innerHTML = dates.map(d=>`<option value="${d}">${d}</option>`).join('');
   toSel.innerHTML = dates.map(d=>`<option value="${d}">${d}</option>`).join('');
-  // default: last 14 days
+  
   const startIdx = Math.max(0, dates.length - 14);
   fromSel.value = dates[startIdx];
   toSel.value = dates[dates.length-1];
@@ -563,9 +643,15 @@ function renderIngredientChart(){
   const c = chartColors();
   const totals = {};
   INGREDIENT_COLS.forEach(col => totals[col] = 0);
+  
   filteredRows.forEach(r => {
-    INGREDIENT_COLS.forEach(col => { totals[col] += parseNum(r.raw[col]); });
+    if(r.raw && Object.keys(r.raw).length > 0){
+        INGREDIENT_COLS.forEach(col => { totals[col] += parseNum(r.raw[col]); });
+    } else if (r.tebon > 0) {
+        totals['Tebon Jagung'] = (totals['Tebon Jagung'] || 0) + r.tebon;
+    }
   });
+  
   const sorted = Object.entries(totals).sort((a,b)=>b[1]-a[1]).filter(e=>e[1]>0).slice(0,8);
 
   destroyChart('ingredient');
