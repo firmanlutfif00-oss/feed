@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Silo — Monitor Usage Pakan</title>
+<title>Silo — Feed Supervisor Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -50,14 +50,14 @@
   .brand{ display:flex; align-items:center; gap:14px; }
   .brand-mark{
     width:42px; height:42px; border-radius: 10px 10px 6px 6px;
-    background: linear-gradient(160deg, var(--wheat-soft), var(--wheat) 60%, #a97a2f);
+    background: linear-gradient(160deg, var(--pasture), #4b7861 60%, #2f503e);
     position:relative; flex-shrink:0;
-    box-shadow: inset 0 -6px 10px rgba(0,0,0,0.25), 0 4px 14px rgba(207,159,79,0.25);
+    box-shadow: inset 0 -6px 10px rgba(0,0,0,0.25), 0 4px 14px rgba(111,162,135,0.25);
   }
   .brand-mark::before{
     content:''; position:absolute; top:-8px; left:50%; transform:translateX(-50%);
     width:20px; height:14px; border-radius:50% 50% 0 0;
-    background: var(--wheat-soft);
+    background: var(--pasture);
   }
   .brand-text h1{
     font-family: var(--font-display); font-size: 22px; font-weight:700; letter-spacing:-0.01em;
@@ -87,7 +87,7 @@
     margin-bottom: 26px;
   }
   .field{ display:flex; flex-direction:column; gap:5px; }
-  .field label{ font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.06em; }
+  .field label{ font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.06em; font-weight:600;}
   select, input[type=text]{
     font-family: var(--font-mono); font-size:13px; color:var(--text);
     background: var(--surface); border:1px solid var(--line); border-radius:8px;
@@ -100,103 +100,50 @@
     margin-left:auto;
   }
   .settings-toggle:hover{ color:var(--text-dim); border-color:var(--text-faint); }
-  .settings-panel{
-    display:none; background:var(--surface); border:1px solid var(--line); border-radius:12px;
-    padding:16px; margin-bottom:22px; font-size:13px; color:var(--text-dim); line-height:1.6;
-  }
-  .settings-panel.open{ display:block; }
-  .settings-panel code{ font-family:var(--font-mono); background:var(--surface-2); padding:1px 5px; border-radius:4px; color:var(--wheat-soft); }
-  .settings-panel .row{ display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; align-items:center; }
-
-  /* Error banner */
-  .banner{
-    display:none; background: rgba(193,80,46,0.12); border:1px solid rgba(193,80,46,0.4);
-    color: var(--rust-soft); padding:14px 16px; border-radius:10px; font-size:13.5px; margin-bottom:22px; line-height:1.6;
-  }
+  
+  /* Banner */
+  .banner{ display:none; background: rgba(193,80,46,0.12); border:1px solid rgba(193,80,46,0.4); color: var(--rust-soft); padding:14px 16px; border-radius:10px; font-size:13.5px; margin-bottom:22px; line-height:1.6; }
   .banner.show{ display:block; }
-  .banner b{ color:#f2ede0; }
 
-  /* KPI cards */
-  .kpi-grid{
-    display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:14px;
-    margin-bottom: 26px;
-  }
-  .kpi{
-    background: var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px 20px;
-    position:relative; overflow:hidden;
-  }
-  .kpi::after{
-    content:''; position:absolute; right:-30px; top:-30px; width:90px; height:90px; border-radius:50%;
-    background: radial-gradient(circle, rgba(207,159,79,0.10), transparent 70%);
-  }
-  .kpi .label{ font-size:11.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; }
+  /* KPIs */
+  .kpi-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:14px; margin-bottom: 26px; }
+  .kpi{ background: var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px 20px; position:relative; overflow:hidden; }
+  .kpi::after{ content:''; position:absolute; right:-30px; top:-30px; width:90px; height:90px; border-radius:50%; background: radial-gradient(circle, rgba(207,159,79,0.08), transparent 70%); }
+  .kpi .label{ font-size:11.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; font-weight:600;}
   .kpi .value{ font-family: var(--font-mono); font-size:26px; font-weight:600; color:var(--text); }
   .kpi .value span{ font-size:14px; color:var(--text-dim); font-weight:400; margin-left:4px; }
   .kpi .sub{ font-size:12px; color:var(--text-dim); margin-top:6px; }
   .kpi.accent .value{ color: var(--wheat-soft); }
+  .kpi.pasture .value{ color: var(--pasture); }
 
-  /* Section headers */
-  .section-title{
-    font-family: var(--font-display); font-size:15px; font-weight:600; color:var(--text);
-    display:flex; align-items:center; gap:10px; margin-bottom:16px;
-  }
+  /* Panels & Layout */
+  .section-title{ font-family: var(--font-display); font-size:15px; font-weight:600; color:var(--text); display:flex; align-items:center; gap:10px; margin-bottom:16px; }
   .section-title .num{ font-family:var(--font-mono); font-size:11px; color:var(--text-faint); border:1px solid var(--line); padding:2px 7px; border-radius:20px; }
-
-  .panel{
-    background: var(--surface); border:1px solid var(--line); border-radius:16px; padding:22px;
-    margin-bottom:22px;
-  }
-  .grid-2{ display:grid; grid-template-columns: 1.4fr 1fr; gap:18px; }
+  .panel{ background: var(--surface); border:1px solid var(--line); border-radius:16px; padding:22px; margin-bottom:22px; }
+  .grid-2{ display:grid; grid-template-columns: 1.2fr 1fr; gap:18px; }
   @media(max-width:900px){ .grid-2{ grid-template-columns:1fr; } }
-
   canvas{ max-height:320px; }
 
-  /* Silo visualization */
-  .silo-row{ display:flex; gap:22px; align-items:flex-end; justify-content:space-around; padding: 10px 6px 4px; flex-wrap:wrap; }
-  .silo-unit{ display:flex; flex-direction:column; align-items:center; gap:10px; flex:1; min-width:70px; }
-  .silo-body{
-    width:52px; height:180px; position:relative; display:flex; align-items:flex-end;
-    background: var(--surface-2);
-    border-radius: 26px 26px 8px 8px;
-    border: 1px solid var(--line);
-    overflow:hidden;
-  }
-  .silo-body::before{
-    content:''; position:absolute; top:-11px; left:50%; transform:translateX(-50%);
-    width:34px; height:22px; border-radius:50% 50% 0 0;
-    background: var(--surface-2); border:1px solid var(--line); border-bottom:none;
-  }
-  .silo-fill{
-    width:100%; border-radius: 2px 2px 6px 6px;
-    background: linear-gradient(180deg, var(--wheat-soft), var(--wheat) 55%, #a97a2f);
-    transition: height 1s cubic-bezier(.2,.8,.2,1);
-    position:relative;
-  }
-  .silo-fill::before{
-    content:''; position:absolute; inset:0;
-    background-image: repeating-linear-gradient(180deg, rgba(0,0,0,0.08) 0 2px, transparent 2px 7px);
-  }
-  .silo-name{ font-family:var(--font-body); font-weight:600; font-size:12.5px; color:var(--text); text-align:center; }
-  .silo-value{ font-family:var(--font-mono); font-size:12px; color:var(--wheat-soft); }
-  .silo-sub{ font-family:var(--font-mono); font-size:10.5px; color:var(--text-faint); }
+  /* Ingredients Grid (All Materials) */
+  .ingred-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 10px; }
+  .ingred-grid::-webkit-scrollbar { width: 6px; }
+  .ingred-grid::-webkit-scrollbar-thumb { background: var(--line); border-radius: 10px; }
+  .ingred-card { background: var(--surface-2); padding: 12px 14px; border-radius: 8px; border: 1px solid var(--line); transition: transform 0.1s; }
+  .ingred-card:hover { border-color: var(--wheat-soft); transform: translateY(-2px); }
+  .ingred-card .name { font-size: 11.5px; color: var(--text-dim); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+  .ingred-card .val { font-family: var(--font-mono); font-size: 16px; color: var(--text); font-weight: 600; }
+  .ingred-card .val span { font-size: 10px; color: var(--text-faint); margin-left: 2px; }
 
   /* Table */
   .table-controls{ display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; align-items:center; }
   .table-scroll{ overflow:auto; max-height:460px; border-radius:10px; border:1px solid var(--line); }
   table{ width:100%; border-collapse:collapse; font-size:12.5px; font-family:var(--font-mono); }
-  thead th{
-    position:sticky; top:0; background:var(--surface-2); color:var(--text-dim);
-    text-align:left; padding:10px 12px; font-weight:600; border-bottom:1px solid var(--line);
-    white-space:nowrap;
-  }
+  thead th{ position:sticky; top:0; background:var(--surface-2); color:var(--text-dim); text-align:left; padding:10px 12px; font-weight:600; border-bottom:1px solid var(--line); white-space:nowrap; }
   tbody td{ padding:8px 12px; border-bottom:1px solid rgba(51,65,58,0.5); color:var(--text-dim); white-space:nowrap; }
   tbody tr:hover{ background: rgba(207,159,79,0.05); }
   tbody td.num{ text-align:right; color:var(--text); }
   .pager{ display:flex; gap:8px; align-items:center; margin-top:12px; font-size:12.5px; color:var(--text-dim); font-family:var(--font-mono); }
-  .pager button{
-    background:var(--surface-2); border:1px solid var(--line); color:var(--text-dim); border-radius:6px;
-    padding:5px 10px; cursor:pointer; font-family:var(--font-mono);
-  }
+  .pager button{ background:var(--surface-2); border:1px solid var(--line); color:var(--text-dim); border-radius:6px; padding:5px 10px; cursor:pointer; font-family:var(--font-mono); }
   .pager button:hover{ color:var(--text); border-color: var(--wheat); }
   .pager button:disabled{ opacity:.35; cursor:not-allowed; }
 
@@ -211,8 +158,8 @@
     <div class="brand">
       <div class="brand-mark"></div>
       <div class="brand-text">
-        <h1>Silo — Monitor Usage Pakan</h1>
-        <p>Live dari Google Sheets · Menarik data "Report All"</p>
+        <h1>Dashboard Supervisor Pakan</h1>
+        <p>Live Data dari Google Sheets · Report All</p>
       </div>
     </div>
     <div class="status-row">
@@ -233,19 +180,10 @@
       <select id="dateTo"></select>
     </div>
     <div class="field">
-      <label>Section</label>
-      <select id="sectionFilter">
-        <option value="ALL">Semua</option>
+      <label>Phase Kandang</label>
+      <select id="phaseFilter">
+        <option value="ALL">Semua Phase</option>
       </select>
-    </div>
-    <button class="settings-toggle" id="settingsToggle">⚙ Sumber data</button>
-  </div>
-
-  <div class="settings-panel" id="settingsPanel">
-    Dashboard ini mengambil data langsung dari spreadsheet. Silakan tempel GID tab dari URL (setelah <code>#gid=</code>) di bawah ini.
-    <div class="row">
-      <input type="text" id="gidInput" placeholder="GID tab, mis. 555405306">
-      <button class="refresh" id="applyGid">Terapkan &amp; refresh</button>
     </div>
   </div>
 
@@ -253,51 +191,53 @@
 
     <div class="kpi-grid">
       <div class="kpi accent">
-        <div class="label">Total usage — periode terpilih</div>
+        <div class="label">Total Pakan (TMR)</div>
         <div class="value" id="kpiTotal">–<span>kg</span></div>
         <div class="sub" id="kpiTotalSub">–</div>
       </div>
+      <div class="kpi pasture">
+        <div class="label">Rasio Hijauan : Konsentrat</div>
+        <div class="value" id="kpiRatio">– : –</div>
+        <div class="sub">Persentase (%) dari total</div>
+      </div>
       <div class="kpi">
-        <div class="label">Rata-rata harian</div>
+        <div class="label">Rata-rata Konsumsi Harian</div>
         <div class="value" id="kpiAvg">–<span>kg/hari</span></div>
+        <div class="sub">Total pakan / Jumlah hari</div>
       </div>
       <div class="kpi">
-        <div class="label">Section pemakaian terbesar</div>
-        <div class="value" id="kpiTopSection">–</div>
-        <div class="sub" id="kpiTopSectionSub">–</div>
-      </div>
-      <div class="kpi">
-        <div class="label">Tebon Jagung — total</div>
-        <div class="value" id="kpiTebon">–<span>kg</span></div>
-        <div class="sub">Bahan pakan utama</div>
+        <div class="label">Phase Konsumsi Terbesar</div>
+        <div class="value" id="kpiTopPhase">–</div>
+        <div class="sub" id="kpiTopPhaseSub">–</div>
       </div>
     </div>
 
     <div class="panel">
-      <div class="section-title"><span class="num">01</span> Tren usage harian</div>
+      <div class="section-title"><span class="num">01</span> Tren Total Pakan Harian</div>
       <canvas id="trendChart"></canvas>
-    </div>
-
-    <div class="panel">
-      <div class="section-title"><span class="num">02</span> Perbandingan silo per section — hari terakhir</div>
-      <div class="silo-row" id="siloRow"></div>
     </div>
 
     <div class="grid-2">
       <div class="panel">
-        <div class="section-title"><span class="num">03</span> Komposisi bahan pakan (periode terpilih)</div>
-        <canvas id="ingredientChart"></canvas>
+        <div class="section-title"><span class="num">02</span> Komparasi Usage per Phase (Kg)</div>
+        <canvas id="phaseBarChart"></canvas>
       </div>
       <div class="panel">
-        <div class="section-title"><span class="num">04</span> Usage per phase</div>
-        <canvas id="phaseChart"></canvas>
+        <div class="section-title"><span class="num">03</span> Distribusi Waktu Pemberian (Shift)</div>
+        <canvas id="timeChart"></canvas>
       </div>
     </div>
 
     <div class="panel">
-      <div class="section-title"><span class="num">05</span> Data rinci</div>
+      <div class="section-title"><span class="num">04</span> Rekap Pemakaian Seluruh Bahan Baku (Kg)</div>
+      <div class="ingred-grid" id="allIngredientsGrid">
+        </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-title"><span class="num">05</span> Data Log Rinci (Report All)</div>
       <div class="table-controls">
-        <input type="text" id="searchBox" placeholder="Cari section / phase / tanggal…" style="min-width:240px;">
+        <input type="text" id="searchBox" placeholder="Cari phase / shift / tanggal…" style="min-width:240px;">
       </div>
       <div class="table-scroll">
         <table>
@@ -314,17 +254,19 @@
 
   </div>
 
-  <div class="skeleton" id="loadingMsg">Mengambil data dari Google Sheets…</div>
+  <div class="skeleton" id="loadingMsg">Menganalisis data dari Google Sheets…</div>
 
-  <footer>Dashboard ini menarik data langsung dari sheet — refresh untuk melihat pembaruan terbaru.</footer>
+  <footer>Sistem Khusus Supervisor · Memantau Report All secara Real-time</footer>
 </div>
 
 <script>
 const SHEET_ID = '1-2wG1wWuN6AFAoS5xNfoM4l_xYVszSWUcHQ-6pFScKI';
-// KUNCI PERBAIKAN: GID sekarang diarahkan ke Tab "Report All" yang memiliki format log rinci.
-let currentGid = '555405306'; 
+const currentGid = '555405306'; // Fix ke tab Report All
 
 const INGREDIENT_COLS = ['Oaten hay','Alfalfa','Indigofera','Sisa Pakan','Rumput Odot','Tebon Jagung','Corn Silage','SBM','Wheat Pollard','DDGS','CGF','Bungkil Kopra','Bungkil Sawit','Ampok Jagung','Canola','CFP','Soy Bean Cake','Palm Kernel Dry','Rice DDGS','Garam','Molases','Air','DCP','Limestone','Netral AHA','Sodium Bicarbonate','Premix Lact','Premix Trans','Premix Dry','Nutricab','Bentonite'];
+
+// Daftar bahan yang dikategorikan sebagai Hijauan/Kasar (Selain ini dianggap Konsentrat/Mineral)
+const FORAGES = ['Oaten hay','Alfalfa','Indigofera','Rumput Odot','Tebon Jagung','Corn Silage'];
 
 let rawRows = [];
 let filteredRows = [];
@@ -339,31 +281,22 @@ function setStatus(mode, text){
   dot.className = 'dot' + (mode === 'live' ? ' live' : mode === 'err' ? ' err' : '');
   t.textContent = text;
 }
-
-function showError(msg){
-  const b = $('errBanner');
-  b.innerHTML = msg;
-  b.classList.add('show');
-}
+function showError(msg){ const b = $('errBanner'); b.innerHTML = msg; b.classList.add('show'); }
 function hideError(){ $('errBanner').classList.remove('show'); }
 
 function parseNum(v){
-  if(v === undefined || v === null || v === '') return 0;
+  if(!v) return 0;
   const n = parseFloat(String(v).replace(/["']/g,'').replace(/,/g,''));
   return isNaN(n) ? 0 : n;
 }
 
-// Format Tanggal
 function parseDate(s){
   if(!s) return null;
   const parts = s.trim().split(/[\s-/]+/);
   if(parts.length < 3) return null;
-  
   let yr, mon, day;
   if (parts[0].length === 4) {
-     yr = parseInt(parts[0], 10);
-     mon = parseInt(parts[1], 10) - 1;
-     day = parseInt(parts[2], 10);
+     yr = parseInt(parts[0], 10); mon = parseInt(parts[1], 10) - 1; day = parseInt(parts[2], 10);
   } else {
      day = parseInt(parts[0],10);
      let monStr = parts[1];
@@ -371,9 +304,7 @@ function parseDate(s){
          monStr = monStr.length > 3 ? monStr.substring(0,3) : monStr;
          const months = {jan:0,feb:1,mar:2,apr:3,mei:4,may:4,jun:5,jul:6,agu:7,aug:7,sep:8,okt:9,oct:9,nov:10,des:11,dec:11};
          mon = months[monStr.toLowerCase()];
-     } else {
-         mon = parseInt(monStr, 10) - 1;
-     }
+     } else { mon = parseInt(monStr, 10) - 1; }
      yr = parseInt(parts[2],10);
      yr = yr < 100 ? 2000+yr : yr;
   }
@@ -381,16 +312,11 @@ function parseDate(s){
   return new Date(yr, mon, day);
 }
 
-function fmtNum(n){
-  return Math.round(n).toLocaleString('id-ID');
-}
+function fmtNum(n){ return Math.round(n).toLocaleString('id-ID'); }
 
 async function loadData(){
-  $('loadingMsg').style.display = 'block';
-  $('content').style.display = 'none';
-  setStatus('', 'Memuat…');
-  hideError();
-
+  $('loadingMsg').style.display = 'block'; $('content').style.display = 'none';
+  setStatus('', 'Memuat…'); hideError();
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${currentGid}`;
 
   try{
@@ -401,15 +327,8 @@ async function loadData(){
     processCSV(text);
     setStatus('live', 'Live · diperbarui ' + new Date().toLocaleTimeString('id-ID'));
   }catch(err){
-    console.error(err);
     setStatus('err', 'Gagal memuat data');
-    if(err.message === 'NOTPUBLIC'){
-      showError(`<b>Akses Ditolak.</b><br>Pastikan Google Sheets sudah diset ke "Anyone with the link can view".`);
-    } else if(err.message === 'EMPTY'){
-      showError(`<b>Data kosong.</b><br>Pastikan GID tab benar dan ada data di dalamnya.`);
-    } else {
-      showError(`<b>Terjadi kesalahan:</b> ${err.message}`);
-    }
+    showError(`<b>Terjadi kesalahan koneksi.</b> Pastikan Sheets diset "Anyone with the link".`);
     $('loadingMsg').style.display = 'none';
   }
 }
@@ -417,15 +336,9 @@ async function loadData(){
 function processCSV(text){
   const parsed = Papa.parse(text, {skipEmptyLines:true});
   const rows = parsed.data;
-  if(rows.length === 0) throw new Error('EMPTY');
   
-  // Cari otomatis di baris mana "Date" berada (biasanya baris ke-2 untuk tab Report All)
-  let headerIdx = rows.findIndex(r => r[0] && String(r[0]).trim().toLowerCase() === 'date');
-  if (headerIdx === -1) {
-      headerIdx = rows.findIndex(r => r.some(cell => String(cell).trim().toLowerCase() === 'date'));
-  }
-  
-  if(headerIdx === -1) throw new Error('Tidak menemukan kolom "Date" di tab ini.');
+  let headerIdx = rows.findIndex(r => r.some(cell => String(cell).trim().toLowerCase() === 'date'));
+  if(headerIdx === -1) throw new Error('Tidak menemukan header Date.');
 
   const headers = rows[headerIdx].map(h => String(h).trim().replace(/\n/g, ' '));
   const dataRows = rows.slice(headerIdx + 1);
@@ -436,47 +349,31 @@ function processCSV(text){
       const r = dataRows[i];
       const dateRaw = String(r[0]).trim();
       const dateObj = parseDate(dateRaw);
-
       if (!dateObj || dateRaw.toLowerCase() === 'date') continue;
 
       const obj = {};
-      headers.forEach((h, idx) => {
-          if(h) obj[h] = r[idx];
-      });
+      headers.forEach((h, idx) => { if(h) obj[h] = r[idx]; });
 
-      let total = 0;
-      let hasIngreds = false;
+      let total = 0, forage = 0, conc = 0;
       INGREDIENT_COLS.forEach(col => {
           const val = parseNum(obj[col]);
           total += val;
-          if (val > 0) hasIngreds = true;
+          // Pemisahan Hijauan dan Konsentrat untuk KPI Supervisor
+          if(FORAGES.includes(col)) forage += val;
+          else if(col !== 'Air' && col !== 'Sisa Pakan') conc += val;
       });
 
-      const tebonVal = parseNum(obj['Tebon Jagung']);
-
-      let sec = (obj['Section'] || obj['SECTION'] || '').trim();
-      if (!sec) sec = 'General';
-
-      let ph = (obj['Phase'] || obj['PHASE'] || '').trim();
+      let ph = (obj['Phase'] || obj['PHASE'] || '').trim().toUpperCase();
       if (!ph) ph = '-';
-
-      let tm = (obj['Time'] || obj['TIME'] || '').trim();
+      let tm = (obj['Time'] || obj['TIME'] || '').trim().toUpperCase();
       if (!tm) tm = '-';
 
       rawRows.push({
-          dateStr: dateRaw,
-          date: dateObj,
-          section: sec,
-          phase: ph,
-          time: tm,
-          tebon: tebonVal,
-          konsentrat: parseNum(obj['Konsentrat']),
-          total: hasIngreds ? total : tebonVal,
-          raw: obj
+          dateStr: dateRaw, date: dateObj,
+          phase: ph, time: tm,
+          total: total, forage: forage, conc: conc, raw: obj
       });
   }
-
-  if(rawRows.length === 0) throw new Error('EMPTY');
 
   populateFilters();
   applyFiltersAndRender();
@@ -485,73 +382,74 @@ function processCSV(text){
 }
 
 function populateFilters(){
-  const dates = [...new Set(rawRows.map(r=>r.dateStr))];
-  dates.sort((a,b) => parseDate(a) - parseDate(b));
-
+  const dates = [...new Set(rawRows.map(r=>r.dateStr))].sort((a,b) => parseDate(a) - parseDate(b));
   const fromSel = $('dateFrom'), toSel = $('dateTo');
   fromSel.innerHTML = dates.map(d=>`<option value="${d}">${d}</option>`).join('');
   toSel.innerHTML = dates.map(d=>`<option value="${d}">${d}</option>`).join('');
-  
-  const startIdx = Math.max(0, dates.length - 14);
-  fromSel.value = dates[startIdx];
+  fromSel.value = dates[Math.max(0, dates.length - 14)];
   toSel.value = dates[dates.length-1];
 
-  const sections = [...new Set(rawRows.map(r=>r.section))].filter(Boolean);
-  const secSel = $('sectionFilter');
-  secSel.innerHTML = '<option value="ALL">Semua</option>' + sections.map(s=>`<option value="${s}">${s}</option>`).join('');
+  const phases = [...new Set(rawRows.map(r=>r.phase))].filter(p => p !== '-');
+  $('phaseFilter').innerHTML = '<option value="ALL">Semua Phase</option>' + phases.map(p=>`<option value="${p}">${p}</option>`).join('');
 }
 
 function applyFiltersAndRender(){
   const fromD = parseDate($('dateFrom').value);
   const toD = parseDate($('dateTo').value);
-  const sec = $('sectionFilter').value;
+  const ph = $('phaseFilter').value;
 
   filteredRows = rawRows.filter(r => {
     if(fromD && r.date < fromD) return false;
     if(toD && r.date > toD) return false;
-    if(sec !== 'ALL' && r.section !== sec) return false;
+    if(ph !== 'ALL' && r.phase !== ph) return false;
     return true;
   });
 
   renderKPIs();
   renderTrendChart();
-  renderSilos();
-  renderIngredientChart();
-  renderPhaseChart();
+  renderPhaseBarChart();
+  renderTimeChart();
+  renderAllIngredients();
   tablePage = 0;
   renderTable();
 }
 
 function renderKPIs(){
   const total = filteredRows.reduce((a,r)=>a+r.total,0);
+  const totalForage = filteredRows.reduce((a,r)=>a+r.forage,0);
+  const totalConc = filteredRows.reduce((a,r)=>a+r.conc,0);
   const days = new Set(filteredRows.map(r=>r.dateStr)).size || 1;
+  
   $('kpiTotal').innerHTML = fmtNum(total) + '<span>kg</span>';
   $('kpiTotalSub').textContent = days + ' hari terpilih';
   $('kpiAvg').innerHTML = fmtNum(total/days) + '<span>kg/hari</span>';
 
-  const bySection = {};
-  filteredRows.forEach(r => { bySection[r.section] = (bySection[r.section]||0) + r.total; });
-  const top = Object.entries(bySection).sort((a,b)=>b[1]-a[1])[0];
-  if(top){
-    $('kpiTopSection').textContent = top[0];
-    $('kpiTopSectionSub').textContent = fmtNum(top[1]) + ' kg total';
+  // Rasio Hijauan vs Konsentrat
+  const sumRatio = totalForage + totalConc;
+  if(sumRatio > 0){
+      const pctForage = ((totalForage/sumRatio)*100).toFixed(1);
+      const pctConc = ((totalConc/sumRatio)*100).toFixed(1);
+      $('kpiRatio').innerHTML = `${pctForage}% : ${pctConc}%`;
+  } else {
+      $('kpiRatio').innerHTML = `- : -`;
   }
 
-  const tebonTotal = filteredRows.reduce((a,r)=>a+r.tebon,0);
-  $('kpiTebon').innerHTML = fmtNum(tebonTotal) + '<span>kg</span>';
+  // Top Phase
+  const byPhase = {};
+  filteredRows.forEach(r => { byPhase[r.phase] = (byPhase[r.phase]||0) + r.total; });
+  const top = Object.entries(byPhase).sort((a,b)=>b[1]-a[1])[0];
+  if(top){
+    $('kpiTopPhase').textContent = top[0];
+    $('kpiTopPhaseSub').textContent = fmtNum(top[1]) + ' kg total pemakaian';
+  }
 }
 
 function destroyChart(key){ if(charts[key]){ charts[key].destroy(); delete charts[key]; } }
 
 function chartColors(){
   return {
-    grid: 'rgba(255,255,255,0.06)',
-    text: '#a9b6ac',
-    wheat: '#cf9f4f',
-    wheatSoft: '#e4bf7a',
-    pasture: '#6fa287',
-    rust: '#c1502e',
-    palette: ['#cf9f4f','#6fa287','#c1502e','#8ea3d1','#c98fd1','#d1b06c','#7fb8c9','#b2955b']
+    grid: 'rgba(255,255,255,0.06)', text: '#a9b6ac', wheat: '#cf9f4f', wheatSoft: '#e4bf7a',
+    palette: ['#cf9f4f','#6fa287','#c1502e','#8ea3d1','#c98fd1','#d1b06c','#7fb8c9','#b2955b', '#5c8072', '#a67246']
   };
 }
 
@@ -560,99 +458,67 @@ function renderTrendChart(){
   const byDate = {};
   filteredRows.forEach(r => { byDate[r.dateStr] = (byDate[r.dateStr]||0) + r.total; });
   const dates = Object.keys(byDate).sort((a,b)=>parseDate(a)-parseDate(b));
-  const values = dates.map(d=>byDate[d]);
-
+  
   destroyChart('trend');
   charts.trend = new Chart($('trendChart'), {
     type:'line',
     data:{ labels:dates, datasets:[{
-      label:'Total usage (kg)', data:values, borderColor:c.wheatSoft, backgroundColor:'rgba(207,159,79,0.12)',
-      fill:true, tension:.35, pointRadius:2, pointBackgroundColor:c.wheat, borderWidth:2
+      label:'Total Pakan (kg)', data:dates.map(d=>byDate[d]), borderColor:c.wheatSoft, backgroundColor:'rgba(207,159,79,0.12)',
+      fill:true, tension:.35, pointRadius:3, pointBackgroundColor:c.wheat, borderWidth:2
     }]},
     options:{
-      responsive:true, maintainAspectRatio:true,
-      plugins:{ legend:{display:false} },
+      responsive:true, maintainAspectRatio:true, plugins:{ legend:{display:false} },
       scales:{
-        x:{ ticks:{color:c.text, maxRotation:60, font:{family:"'IBM Plex Mono', monospace", size:10}}, grid:{color:c.grid} },
-        y:{ ticks:{color:c.text, font:{family:"'IBM Plex Mono', monospace", size:10}}, grid:{color:c.grid} }
+        x:{ ticks:{color:c.text, font:{family:"'IBM Plex Mono'", size:10}}, grid:{color:c.grid} },
+        y:{ ticks:{color:c.text, font:{family:"'IBM Plex Mono'", size:10}}, grid:{color:c.grid} }
       }
     }
   });
 }
 
-function renderSilos(){
-  const lastDate = filteredRows.length ? filteredRows.reduce((a,r)=> r.date>a?r.date:a, filteredRows[0].date) : null;
-  const lastDateStr = filteredRows.filter(r=>r.date.getTime()===(lastDate?lastDate.getTime():0)).map(r=>r.dateStr)[0];
-  const dayRows = filteredRows.filter(r => r.dateStr === lastDateStr);
-  const bySection = {};
-  dayRows.forEach(r => { bySection[r.section] = (bySection[r.section]||0) + r.total; });
-  const entries = Object.entries(bySection).sort((a,b)=>b[1]-a[1]);
-  const max = Math.max(...entries.map(e=>e[1]), 1);
-
-  const el = $('siloRow');
-  el.innerHTML = '';
-  if(entries.length === 0){
-    el.innerHTML = '<div style="color:var(--text-faint); font-family:var(--font-mono); font-size:13px;">Tidak ada data untuk hari terakhir pada filter ini.</div>';
-    return;
-  }
-  entries.forEach(([name,val]) => {
-    const pct = Math.max(4, (val/max)*100);
-    const div = document.createElement('div');
-    div.className = 'silo-unit';
-    div.innerHTML = `
-      <div class="silo-body"><div class="silo-fill" style="height:0%"></div></div>
-      <div class="silo-name">${name}</div>
-      <div class="silo-value">${fmtNum(val)} kg</div>
-      <div class="silo-sub">${lastDateStr||''}</div>`;
-    el.appendChild(div);
-    requestAnimationFrame(()=>{ div.querySelector('.silo-fill').style.height = pct+'%'; });
-  });
-}
-
-function renderIngredientChart(){
+function renderPhaseBarChart(){
   const c = chartColors();
-  const totals = {};
-  INGREDIENT_COLS.forEach(col => totals[col] = 0);
-  
-  filteredRows.forEach(r => {
-    if(r.raw && Object.keys(r.raw).length > 0){
-        INGREDIENT_COLS.forEach(col => { totals[col] += parseNum(r.raw[col]); });
-    } else if (r.tebon > 0) {
-        totals['Tebon Jagung'] = (totals['Tebon Jagung'] || 0) + r.tebon;
-    }
-  });
-  
-  const sorted = Object.entries(totals).sort((a,b)=>b[1]-a[1]).filter(e=>e[1]>0).slice(0,8);
+  const byPhase = {};
+  filteredRows.forEach(r => { byPhase[r.phase] = (byPhase[r.phase]||0) + r.total; });
+  // Hapus baris kosong/strip
+  delete byPhase['-'];
+  const entries = Object.entries(byPhase).sort((a,b)=>b[1]-a[1]);
 
-  destroyChart('ingredient');
-  charts.ingredient = new Chart($('ingredientChart'), {
+  destroyChart('phaseBar');
+  charts.phaseBar = new Chart($('phaseBarChart'), {
     type:'bar',
-    data:{ labels: sorted.map(e=>e[0]), datasets:[{
-      data: sorted.map(e=>e[1]), backgroundColor: c.palette, borderRadius:6
-    }]},
+    data:{ 
+      labels: entries.map(e=>e[0]), 
+      datasets:[{ data: entries.map(e=>e[1]), backgroundColor: c.palette, borderRadius:4 }]
+    },
     options:{
-      indexAxis:'y', responsive:true, maintainAspectRatio:true,
-      plugins:{ legend:{display:false} },
+      responsive:true, maintainAspectRatio:true, plugins:{ legend:{display:false} },
       scales:{
-        x:{ ticks:{color:c.text, font:{family:"'IBM Plex Mono', monospace", size:10}}, grid:{color:c.grid} },
-        y:{ ticks:{color:c.text, font:{size:11}}, grid:{display:false} }
+        x:{ ticks:{color:c.text, font:{size:11}}, grid:{display:false} },
+        y:{ ticks:{color:c.text, font:{family:"'IBM Plex Mono'", size:10}}, grid:{color:c.grid} }
       }
     }
   });
 }
 
-function renderPhaseChart(){
+function renderTimeChart(){
   const c = chartColors();
   const totals = {};
-  filteredRows.forEach(r => { totals[r.phase] = (totals[r.phase]||0) + r.total; });
+  filteredRows.forEach(r => { totals[r.time] = (totals[r.time]||0) + r.total; });
+  delete totals['-'];
   const entries = Object.entries(totals).filter(e=>e[1]>0);
 
-  destroyChart('phase');
-  charts.phase = new Chart($('phaseChart'), {
+  // Paksa urutan jika Pagi Siang Malam
+  const order = {'PAGI':1, 'SIANG':2, 'MALAM':3};
+  entries.sort((a,b) => (order[a[0]]||9) - (order[b[0]]||9));
+
+  destroyChart('time');
+  charts.time = new Chart($('timeChart'), {
     type:'doughnut',
-    data:{ labels: entries.map(e=>e[0]), datasets:[{
-      data: entries.map(e=>e[1]), backgroundColor: c.palette, borderColor: '#212c25', borderWidth:3
-    }]},
+    data:{ 
+      labels: entries.map(e=>e[0]), 
+      datasets:[{ data: entries.map(e=>e[1]), backgroundColor: ['#e4bf7a','#6fa287','#c1502e','#8ea3d1'], borderColor: '#212c25', borderWidth:3 }]
+    },
     options:{
       responsive:true, maintainAspectRatio:true,
       plugins:{ legend:{position:'bottom', labels:{color:c.text, font:{size:11}, padding:14}} }
@@ -660,14 +526,40 @@ function renderPhaseChart(){
   });
 }
 
+function renderAllIngredients(){
+  const totals = {};
+  INGREDIENT_COLS.forEach(col => totals[col] = 0);
+  
+  filteredRows.forEach(r => {
+    INGREDIENT_COLS.forEach(col => { totals[col] += parseNum(r.raw[col]); });
+  });
+  
+  // Sort dari yang pemakaiannya terbesar ke terkecil, buang yang 0
+  const sorted = Object.entries(totals).filter(e => e[1] > 0).sort((a,b) => b[1] - a[1]);
+  
+  const grid = $('allIngredientsGrid');
+  if(sorted.length === 0){
+      grid.innerHTML = `<div style="color:var(--text-faint); grid-column:1/-1;">Tidak ada pemakaian bahan di periode ini.</div>`;
+      return;
+  }
+
+  grid.innerHTML = sorted.map(e => `
+    <div class="ingred-card">
+      <div class="name" title="${e[0]}">${e[0]}</div>
+      <div class="val">${fmtNum(e[1])}<span>kg</span></div>
+    </div>
+  `).join('');
+}
+
 function renderTable(){
-  const cols = ['Date','Section','Phase','Time','Tebon Jagung','Konsentrat','Total'];
-  $('tableHead').innerHTML = cols.map(c=>`<th>${c}</th>`).join('');
+  // Tampilkan bahan paling umum saja di tabel log, sisanya di grid atas
+  const displayCols = ['Date','Phase','Time','Tebon Jagung','Corn Silage','SBM','Total'];
+  $('tableHead').innerHTML = displayCols.map(c=>`<th>${c}</th>`).join('');
 
   const search = $('searchBox').value.trim().toLowerCase();
   let rows = filteredRows;
   if(search){
-    rows = rows.filter(r => (r.dateStr+r.section+r.phase+r.time).toLowerCase().includes(search));
+    rows = rows.filter(r => (r.dateStr+r.phase+r.time).toLowerCase().includes(search));
   }
   rows = [...rows].sort((a,b)=> b.date - a.date);
 
@@ -676,9 +568,10 @@ function renderTable(){
 
   $('tableBody').innerHTML = pageRows.map(r => `
     <tr>
-      <td>${r.dateStr}</td><td>${r.section}</td><td>${r.phase}</td><td>${r.time}</td>
-      <td class="num">${fmtNum(r.tebon)}</td>
-      <td class="num">${fmtNum(r.konsentrat)}</td>
+      <td>${r.dateStr}</td><td>${r.phase}</td><td>${r.time}</td>
+      <td class="num">${fmtNum(parseNum(r.raw['Tebon Jagung']))}</td>
+      <td class="num">${fmtNum(parseNum(r.raw['Corn Silage']))}</td>
+      <td class="num">${fmtNum(parseNum(r.raw['SBM']))}</td>
       <td class="num">${fmtNum(r.total)}</td>
     </tr>`).join('') || '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-faint);">Tidak ada data.</td></tr>';
 
@@ -692,15 +585,10 @@ function renderTable(){
 $('refreshBtn').addEventListener('click', loadData);
 $('dateFrom').addEventListener('change', applyFiltersAndRender);
 $('dateTo').addEventListener('change', applyFiltersAndRender);
-$('sectionFilter').addEventListener('change', applyFiltersAndRender);
+$('phaseFilter').addEventListener('change', applyFiltersAndRender);
 $('searchBox').addEventListener('input', ()=>{ tablePage=0; renderTable(); });
 $('prevPage').addEventListener('click', ()=>{ if(tablePage>0){tablePage--; renderTable();} });
 $('nextPage').addEventListener('click', ()=>{ tablePage++; renderTable(); });
-$('settingsToggle').addEventListener('click', ()=> $('settingsPanel').classList.toggle('open'));
-$('applyGid').addEventListener('click', ()=>{
-  const v = $('gidInput').value.trim();
-  if(v){ currentGid = v; loadData(); }
-});
 
 loadData();
 </script>
