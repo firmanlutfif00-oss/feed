@@ -212,7 +212,7 @@
       <div class="brand-mark"></div>
       <div class="brand-text">
         <h1>Silo — Monitor Usage Pakan</h1>
-        <p>Live dari Google Sheets · Advanced Parser</p>
+        <p>Live dari Google Sheets · Force Parser v3</p>
       </div>
     </div>
     <div class="status-row">
@@ -353,17 +353,31 @@ function parseNum(v){
   return isNaN(n) ? 0 : n;
 }
 
+// Format Tanggal Lebih Kuat
 function parseDate(s){
   if(!s) return null;
-  const parts = s.trim().split(/[\s-]+/);
+  const parts = s.trim().split(/[\s-/]+/);
   if(parts.length < 3) return null;
-  const months = {Jan:0,Feb:1,Mar:2,Apr:3,Mei:4,May:4,Jun:5,Jul:6,Agu:7,Aug:7,Sep:8,Okt:9,Oct:9,Nov:10,Des:11,Dec:11};
-  const day = parseInt(parts[0],10);
-  const monStr = parts[1].length > 3 ? parts[1].substring(0,3) : parts[1];
-  const mon = months[monStr] !== undefined ? months[monStr] : months[parts[1]];
-  let yr = parseInt(parts[2],10);
-  yr = yr < 100 ? 2000+yr : yr;
-  if(mon === undefined || isNaN(day)) return null;
+  
+  let yr, mon, day;
+  if (parts[0].length === 4) {
+     yr = parseInt(parts[0], 10);
+     mon = parseInt(parts[1], 10) - 1;
+     day = parseInt(parts[2], 10);
+  } else {
+     day = parseInt(parts[0],10);
+     let monStr = parts[1];
+     if(isNaN(monStr)) {
+         monStr = monStr.length > 3 ? monStr.substring(0,3) : monStr;
+         const months = {jan:0,feb:1,mar:2,apr:3,mei:4,may:4,jun:5,jul:6,agu:7,aug:7,sep:8,okt:9,oct:9,nov:10,des:11,dec:11};
+         mon = months[monStr.toLowerCase()];
+     } else {
+         mon = parseInt(monStr, 10) - 1;
+     }
+     yr = parseInt(parts[2],10);
+     yr = yr < 100 ? 2000+yr : yr;
+  }
+  if(mon === undefined || isNaN(day) || isNaN(yr)) return null;
   return new Date(yr, mon, day);
 }
 
@@ -391,8 +405,8 @@ async function loadData(){
     setStatus('err', 'Gagal memuat data');
     if(err.message === 'NOTPUBLIC'){
       showError(`<b>Akses Ditolak.</b><br>Pastikan Google Sheets sudah diset ke "Anyone with the link can view".`);
-    } else if(err.message === 'NOHEADER' || err.message === 'EMPTY'){
-      showError(`<b>Format tabel tidak dikenali.</b><br>Sistem tidak dapat menemukan header yang sesuai. Pastikan GID tab yang dimasukkan memuat tabel data.`);
+    } else if(err.message === 'EMPTY'){
+      showError(`<b>Data kosong.</b><br>Pastikan GID tab benar dan ada data di dalamnya.`);
     } else {
       showError(`<b>Terjadi kesalahan:</b> ${err.message}`);
     }
@@ -403,107 +417,105 @@ async function loadData(){
 function processCSV(text){
   const parsed = Papa.parse(text, {skipEmptyLines:true});
   const rows = parsed.data;
+  if(rows.length === 0) throw new Error('EMPTY');
   
-  // Deteksi letak header Date (antisipasi spasi dan besar/kecil)
-  let headerIdx = rows.findIndex(r => r[0] && String(r[0]).trim().toLowerCase() === 'date');
-  if(headerIdx === -1) throw new Error('NOHEADER');
+  // 1. Deteksi "Mode Paksa" (Foolproof Detection)
+  let isUsageTebon = currentGid === '1157965826'; 
   
-  // Bersihkan teks header dari enter (\n) yang tersembunyi
-  const headers1 = rows[headerIdx].map(h => String(h).trim().replace(/\n/g, ' '));
-  const headers2 = rows.length > headerIdx + 1 ? rows[headerIdx + 1].map(h => String(h).trim().replace(/\n/g, ' ')) : [];
-
-  // Deteksi apakah ini tab "Usage Tebon" yang tulisan headernya sering ada enters/newline
-  const isUsageTebon = headers1.some(h => h.toLowerCase().includes('usage tebon'));
-
-  // Tentukan baris dimulainya data asli (lewati sub-header jika ada)
-  let dataStartIdx = headerIdx + 1;
-  if (headers2.some(h => ['fresh','early','late','dry','yearling'].includes(h.toLowerCase()))) {
-      dataStartIdx = headerIdx + 2; 
+  if (!isUsageTebon) {
+      // Deteksi cadangan jika GID berubah tapi formatnya sama
+      for(let i=0; i<Math.min(rows.length, 5); i++) {
+          const rowStr = rows[i].join(' ').toLowerCase();
+          if(rowStr.includes('fresh') && rowStr.includes('early') && rowStr.includes('late')) {
+              isUsageTebon = true;
+              break;
+          }
+      }
   }
-  
-  const dataRows = rows.slice(dataStartIdx);
+
+  // 2. Ekstrak Header (Hanya untuk mode tabel standar)
+  let headers = [];
+  if (!isUsageTebon) {
+      let headerIdx = rows.findIndex(r => r.some(cell => String(cell).trim().toLowerCase() === 'date' || String(cell).trim().toLowerCase() === 'tanggal'));
+      if (headerIdx !== -1) {
+          headers = rows[headerIdx].map(h => String(h).trim().replace(/\n/g, ' '));
+      } else {
+          headers = rows[0].map(h => String(h).trim().replace(/\n/g, ' '));
+      }
+  }
+
+  // 3. Tarik Data Baris
   rawRows = [];
-  
-  if (isUsageTebon) {
-    // PROSES TAB REKAP (USAGE TEBON)
-    const phases = ['Fresh', 'Early', 'Late', 'Dry', 'Yearling'];
-    const phaseMap = {};
-    
-    phases.forEach(p => {
-         // Cari letak kolom per phase (cek baris 2 dulu, lalu baris 1)
-         let idx = headers2.findIndex(h => h.toLowerCase() === p.toLowerCase());
-         if (idx === -1) idx = headers1.findIndex(h => h.toLowerCase() === p.toLowerCase());
-         
-         // Jika nama terhapus, pasang backup index manual kolom C(2) sampai G(6)
-         if (idx === -1) {
-             if(p==='Fresh') idx = 2;
-             if(p==='Early') idx = 3;
-             if(p==='Late') idx = 4;
-             if(p==='Dry') idx = 5;
-             if(p==='Yearling') idx = 6;
-         }
-         phaseMap[p] = idx;
-    });
-
-    for(const r of dataRows){
+  for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
       const dateRaw = String(r[0]).trim();
-      if(!dateRaw) continue;
       const dateObj = parseDate(dateRaw);
-      if(!dateObj) continue;
 
-      phases.forEach(pName => {
-         const idx = phaseMap[pName];
-         if(idx !== -1 && idx < r.length) {
-             const val = parseNum(r[idx]);
-             if(val > 0) {
-                 rawRows.push({
-                     dateStr: dateRaw,
-                     date: dateObj,
-                     section: 'Tebon (All)',
-                     phase: pName,
-                     time: '-',
-                     tebon: val,
-                     konsentrat: 0,
-                     total: val,
-                     raw: {}
-                 });
-             }
-         }
-      });
-    }
-  } else {
-    // PROSES TAB RINCIAN HARIAN LAINNYA
-    for(const r of dataRows){
-      const dateRaw = String(r[0]).trim();
-      if(!dateRaw) continue;
-      const dateObj = parseDate(dateRaw);
-      if(!dateObj) continue;
+      // Lewati header atau baris kosong
+      if (!dateObj || dateRaw.toLowerCase() === 'date' || dateRaw.toLowerCase() === 'tanggal') continue;
 
-      const obj = {};
-      headers1.forEach((h,i) => obj[h] = r[i]);
-      
-      let total = 0;
-      let hasIngreds = false;
-      INGREDIENT_COLS.forEach(col => { 
-        const val = parseNum(obj[col]);
-        total += val; 
-        if(val > 0) hasIngreds = true;
-      });
-      
-      const tebonVal = parseNum(obj['Tebon Jagung']);
-      
-      rawRows.push({
-        dateStr: dateRaw,
-        date: dateObj,
-        section: (obj['Section']||'').trim() || 'General',
-        phase: (obj['Phase']||'').trim() || '-',
-        time: (obj['Time']||'').trim() || '-',
-        tebon: tebonVal,
-        konsentrat: parseNum(obj['Konsentrat']),
-        total: hasIngreds ? total : tebonVal, 
-        raw: obj
-      });
-    }
+      if (isUsageTebon) {
+          // MODE PAKSA: Ambil paksa dari index kolom C(2) hingga G(6)
+          const phases = ['Fresh', 'Early', 'Late', 'Dry', 'Yearling'];
+          const colIndices = [2, 3, 4, 5, 6];
+
+          phases.forEach((pName, idx) => {
+              if (r.length > colIndices[idx]) {
+                  const val = parseNum(r[colIndices[idx]]);
+                  if (val > 0) {
+                      rawRows.push({
+                          dateStr: dateRaw,
+                          date: dateObj,
+                          section: 'Tebon (All)',
+                          phase: pName,
+                          time: '-',
+                          tebon: val,
+                          konsentrat: 0,
+                          total: val,
+                          raw: {}
+                      });
+                  }
+              }
+          });
+      } else {
+          // MODE STANDAR (WHS / Rincian)
+          const obj = {};
+          headers.forEach((h, idx) => {
+              if(h) obj[h] = r[idx];
+          });
+
+          let total = 0;
+          let hasIngreds = false;
+          INGREDIENT_COLS.forEach(col => {
+              const val = parseNum(obj[col]);
+              total += val;
+              if (val > 0) hasIngreds = true;
+          });
+
+          const tebonVal = parseNum(obj['Tebon Jagung']);
+
+          // Pengaman agar teks tidak blank
+          let sec = (obj['Section'] || obj['SECTION'] || '').trim();
+          if (!sec) sec = 'General';
+
+          let ph = (obj['Phase'] || obj['PHASE'] || '').trim();
+          if (!ph) ph = '-';
+
+          let tm = (obj['Time'] || obj['TIME'] || '').trim();
+          if (!tm) tm = '-';
+
+          rawRows.push({
+              dateStr: dateRaw,
+              date: dateObj,
+              section: sec,
+              phase: ph,
+              time: tm,
+              tebon: tebonVal,
+              konsentrat: parseNum(obj['Konsentrat']),
+              total: hasIngreds ? total : tebonVal,
+              raw: obj
+          });
+      }
   }
 
   if(rawRows.length === 0) throw new Error('EMPTY');
