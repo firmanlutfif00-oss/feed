@@ -100,7 +100,7 @@
   .kpi .label{ font-size:11.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; font-weight:600;}
   .kpi .value{ font-family: var(--font-mono); font-size:26px; font-weight:600; color:var(--text); }
   .kpi .value span{ font-size:14px; color:var(--text-dim); font-weight:400; margin-left:4px; }
-  .kpi .sub{ font-size:12px; color:var(--text-dim); margin-top:6px; }
+  .kpi .sub{ font-size:12px; color:var(--text-dim); margin-top:6px; line-height:1.4;}
   .kpi.accent .value{ color: var(--wheat-soft); }
   .kpi.pasture .value{ color: var(--pasture); }
 
@@ -124,10 +124,12 @@
 
   /* Table */
   .table-controls{ display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; align-items:center; }
-  .table-scroll{ overflow:auto; max-height:460px; border-radius:10px; border:1px solid var(--line); }
-  table{ width:100%; border-collapse:collapse; font-size:12.5px; font-family:var(--font-mono); }
-  thead th{ position:sticky; top:0; background:var(--surface-2); color:var(--text-dim); text-align:left; padding:10px 12px; font-weight:600; border-bottom:1px solid var(--line); white-space:nowrap; }
-  tbody td{ padding:8px 12px; border-bottom:1px solid rgba(51,65,58,0.5); color:var(--text-dim); white-space:nowrap; }
+  .table-scroll{ overflow-x:auto; max-height:460px; border-radius:10px; border:1px solid var(--line); padding-bottom:10px;}
+  .table-scroll::-webkit-scrollbar { height: 8px; width: 6px;}
+  .table-scroll::-webkit-scrollbar-thumb { background: var(--pasture); border-radius: 10px; }
+  table{ width:100%; border-collapse:collapse; font-size:11.5px; font-family:var(--font-mono); }
+  thead th{ position:sticky; top:0; background:var(--surface-2); color:var(--text-dim); text-align:left; padding:10px; font-weight:600; border-bottom:1px solid var(--line); white-space:nowrap; z-index:10;}
+  tbody td{ padding:8px 10px; border-bottom:1px solid rgba(51,65,58,0.5); color:var(--text-dim); white-space:nowrap; }
   tbody tr:hover{ background: rgba(207,159,79,0.05); }
   tbody td.num{ text-align:right; color:var(--text); }
   .pager{ display:flex; gap:8px; align-items:center; margin-top:12px; font-size:12.5px; color:var(--text-dim); font-family:var(--font-mono); }
@@ -146,7 +148,7 @@
       <div class="brand-mark"></div>
       <div class="brand-text">
         <h1>Dashboard Supervisor Pakan</h1>
-        <p>Live Data Google Sheets · Report All & Intake/Hd</p>
+        <p>Live Data Google Sheets · Report All & Intake/Hd (v4)</p>
       </div>
     </div>
     <div class="status-row">
@@ -188,9 +190,9 @@
         <div class="sub">Persentase (%) dari total</div>
       </div>
       <div class="kpi">
-        <div class="label">Rata-rata Konsumsi Harian</div>
-        <div class="value" id="kpiAvg">–<span>kg/hari</span></div>
-        <div class="sub">Total pakan / Jumlah hari</div>
+        <div class="label">Rata-rata Konsumsi (Intake)</div>
+        <div class="value" id="kpiAvg">–<span>kg/ekor</span></div>
+        <div class="sub" id="kpiAvgSub">Total Pakan / Total Populasi harian</div>
       </div>
       <div class="kpi">
         <div class="label">Section Konsumsi Terbesar</div>
@@ -227,7 +229,7 @@
     </div>
 
     <div class="panel">
-      <div class="section-title"><span class="num">06</span> Data Log Rinci (Report All) - Geser ke Kanan</div>
+      <div class="section-title"><span class="num">06</span> Data Log Rinci (Report All) <span style="font-size:12px; color:var(--text-faint); margin-left:6px; font-weight:400;">↔ Geser tabel ke kanan untuk melihat 31 bahan pakan</span></div>
       <div class="table-controls">
         <input type="text" id="searchBox" placeholder="Cari section / shift / tanggal…" style="min-width:240px;">
       </div>
@@ -398,14 +400,27 @@ function processIntakeCSV(text){
   const rows = parsed.data;
   intakeDataRaw = [];
 
-  let headerIdx = rows.findIndex(r => r.some(cell => String(cell).toUpperCase().includes('FRESH')));
+  let headerIdx = rows.findIndex(r => {
+      let txt = r.join(' ').toUpperCase();
+      return txt.includes('FRESH') && txt.includes('EARLY') && txt.includes('LATE');
+  });
   if (headerIdx === -1) return;
 
-  let headers = rows[headerIdx].map(h => String(h).trim().toUpperCase());
-  const getIdx = (name) => headers.lastIndexOf(name); // Ambil Intake (sebelah kanan), bukan populasi (kiri)
+  let hRow = rows[headerIdx].map(h => String(h).trim().toUpperCase());
+  
+  // Ambil Index Populasi (Kemunculan Pertama)
+  let pF = hRow.indexOf('FRESH'); if(pF===-1) pF=8;
+  let pE = hRow.indexOf('EARLY'); if(pE===-1) pE=9;
+  let pL = hRow.indexOf('LATE');  if(pL===-1) pL=10;
+  let pD = hRow.indexOf('DRY');   if(pD===-1) pD=11;
+  let pY = hRow.indexOf('YEARLING'); if(pY===-1) pY=12;
 
-  let iF = getIdx('FRESH'), iE = getIdx('EARLY'), iL = getIdx('LATE'), iD = getIdx('DRY'), iY = getIdx('YEARLING');
-  if (iF === -1) iF = 16; if (iE === -1) iE = 17; if (iL === -1) iL = 18; if (iD === -1) iD = 19; if (iY === -1) iY = 20;
+  // Ambil Index Intake (Kemunculan Kedua, jika gagal paksa ke Kolom Q:U / 16:20)
+  let iF = hRow.indexOf('FRESH', pF + 1); if(iF===-1) iF=16;
+  let iE = hRow.indexOf('EARLY', pE + 1); if(iE===-1) iE=17;
+  let iL = hRow.indexOf('LATE', pL + 1);  if(iL===-1) iL=18;
+  let iD = hRow.indexOf('DRY', pD + 1);   if(iD===-1) iD=19;
+  let iY = hRow.indexOf('YEARLING', pY + 1); if(iY===-1) iY=20;
 
   for (let i = headerIdx + 1; i < rows.length; i++) {
       const r = rows[i];
@@ -415,8 +430,16 @@ function processIntakeCSV(text){
 
       intakeDataRaw.push({
           dateStr: dateRaw, date: dateObj,
-          FRESH: parseNum(r[iF]), EARLY: parseNum(r[iE]), LATE: parseNum(r[iL]),
-          DRY: parseNum(r[iD]), YEARLING: parseNum(r[iY])
+          intake_FRESH: parseNum(r[iF]), 
+          intake_EARLY: parseNum(r[iE]), 
+          intake_LATE: parseNum(r[iL]),
+          intake_DRY: parseNum(r[iD]), 
+          intake_YEARLING: parseNum(r[iY]),
+          pop_FRESH: parseNum(r[pF]), 
+          pop_EARLY: parseNum(r[pE]), 
+          pop_LATE: parseNum(r[pL]),
+          pop_DRY: parseNum(r[pD]), 
+          pop_YEARLING: parseNum(r[pY])
       });
   }
 }
@@ -469,8 +492,8 @@ function renderKPIs(){
   
   $('kpiTotal').innerHTML = fmtNum(total) + '<span>kg</span>';
   $('kpiTotalSub').textContent = days + ' hari terpilih';
-  $('kpiAvg').innerHTML = fmtNum(total/days) + '<span>kg/hari</span>';
 
+  // Rasio Hijauan : Konsentrat
   const sumRatio = totalForage + totalConc;
   if(sumRatio > 0){
       $('kpiRatio').innerHTML = `${((totalForage/sumRatio)*100).toFixed(1)}% : ${((totalConc/sumRatio)*100).toFixed(1)}%`;
@@ -478,6 +501,27 @@ function renderKPIs(){
       $('kpiRatio').innerHTML = `- : -`;
   }
 
+  // RATA-RATA KONSUMSI HARIAN (Weighted Average Intake)
+  let totalPop = 0;
+  const sec = $('sectionFilter').value;
+  filteredIntakeRows.forEach(r => {
+      if(sec === 'ALL' || sec === 'FRESH') totalPop += r.pop_FRESH;
+      if(sec === 'ALL' || sec === 'EARLY') totalPop += r.pop_EARLY;
+      if(sec === 'ALL' || sec === 'LATE') totalPop += r.pop_LATE;
+      if(sec === 'ALL' || sec === 'DRY') totalPop += r.pop_DRY;
+      if(sec === 'ALL' || sec === 'YEARLING') totalPop += r.pop_YEARLING;
+  });
+
+  if (totalPop > 0) {
+      const avgPerHd = total / totalPop;
+      $('kpiAvg').innerHTML = avgPerHd.toFixed(2) + '<span>kg/ekor</span>';
+      $('kpiAvgSub').textContent = `Dari akumulasi populasi ${fmtNum(totalPop)} ekor`;
+  } else {
+      $('kpiAvg').innerHTML = fmtNum(total/days) + '<span>kg/hari</span>';
+      $('kpiAvgSub').textContent = 'Total pakan / Jumlah hari';
+  }
+
+  // Top Section
   const bySection = {};
   filteredRows.forEach(r => { bySection[r.section] = (bySection[r.section]||0) + r.total; });
   const top = Object.entries(bySection).sort((a,b)=>b[1]-a[1])[0];
@@ -530,7 +574,7 @@ function renderIntakeChart(){
      if(sec === 'ALL' || sec === ph) {
          datasets.push({
              label: ph,
-             data: filteredIntakeRows.map(r => r[ph]),
+             data: filteredIntakeRows.map(r => r['intake_'+ph]),
              borderColor: c.palette[i % c.palette.length],
              backgroundColor: c.palette[i % c.palette.length],
              tension: .35, pointRadius: 2, fill: false, borderWidth:2
@@ -616,7 +660,6 @@ function renderAllIngredients(){
 }
 
 function renderTable(){
-  // Menampilkan SELURUH 31 bahan pakan di dalam tabel
   const displayCols = ['Date','Section','Time', ...INGREDIENT_COLS, 'Total'];
   $('tableHead').innerHTML = displayCols.map(c=>`<th>${c}</th>`).join('');
 
