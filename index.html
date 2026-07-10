@@ -59,20 +59,18 @@
     width:20px; height:14px; border-radius:50% 50% 0 0;
     background: var(--pasture);
   }
-  .brand-text h1{
-    font-family: var(--font-display); font-size: 22px; font-weight:700; letter-spacing:-0.01em;
-  }
+  .brand-text h1{ font-family: var(--font-display); font-size: 22px; font-weight:700; letter-spacing:-0.01em; }
   .brand-text p{ font-size:12.5px; color:var(--text-dim); margin-top:2px; }
   .status-row{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
   .status-pill{
-    display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text-dim);
-    font-family: var(--font-mono);
+    display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text-dim); font-family: var(--font-mono);
     background: var(--surface); border:1px solid var(--line); padding:7px 12px; border-radius:20px;
   }
   .dot{ width:8px; height:8px; border-radius:50%; background: var(--text-faint); flex-shrink:0; }
   .dot.live{ background: var(--pasture); box-shadow:0 0 0 3px rgba(111,162,135,0.18); animation:pulse 2s infinite; }
   .dot.err{ background: var(--rust); box-shadow:0 0 0 3px rgba(193,80,46,0.18); }
   @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.45;} }
+  
   button.refresh{
     font-family: var(--font-body); font-weight:600; font-size:13px; color: var(--bg);
     background: var(--wheat-soft); border:none; padding:9px 16px; border-radius:20px; cursor:pointer;
@@ -82,24 +80,14 @@
   button.refresh:active{ transform: translateY(0); }
 
   /* Controls */
-  .controls{
-    display:flex; gap:12px; flex-wrap:wrap; align-items:center;
-    margin-bottom: 26px;
-  }
+  .controls{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom: 26px; }
   .field{ display:flex; flex-direction:column; gap:5px; }
   .field label{ font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.06em; font-weight:600;}
   select, input[type=text]{
-    font-family: var(--font-mono); font-size:13px; color:var(--text);
-    background: var(--surface); border:1px solid var(--line); border-radius:8px;
-    padding:8px 10px; outline:none; min-width:120px;
+    font-family: var(--font-mono); font-size:13px; color:var(--text); background: var(--surface); 
+    border:1px solid var(--line); border-radius:8px; padding:8px 10px; outline:none; min-width:120px;
   }
   select:focus, input[type=text]:focus{ border-color: var(--wheat); }
-  .settings-toggle{
-    font-family: var(--font-mono); font-size:12px; color:var(--text-faint);
-    background:none; border:1px dashed var(--line); padding:8px 12px; border-radius:8px; cursor:pointer;
-    margin-left:auto;
-  }
-  .settings-toggle:hover{ color:var(--text-dim); border-color:var(--text-faint); }
   
   /* Banner */
   .banner{ display:none; background: rgba(193,80,46,0.12); border:1px solid rgba(193,80,46,0.4); color: var(--rust-soft); padding:14px 16px; border-radius:10px; font-size:13.5px; margin-bottom:22px; line-height:1.6; }
@@ -120,7 +108,7 @@
   .section-title{ font-family: var(--font-display); font-size:15px; font-weight:600; color:var(--text); display:flex; align-items:center; gap:10px; margin-bottom:16px; }
   .section-title .num{ font-family:var(--font-mono); font-size:11px; color:var(--text-faint); border:1px solid var(--line); padding:2px 7px; border-radius:20px; }
   .panel{ background: var(--surface); border:1px solid var(--line); border-radius:16px; padding:22px; margin-bottom:22px; }
-  .grid-2{ display:grid; grid-template-columns: 1.2fr 1fr; gap:18px; }
+  .grid-2{ display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
   @media(max-width:900px){ .grid-2{ grid-template-columns:1fr; } }
   canvas{ max-height:320px; }
 
@@ -146,7 +134,6 @@
   .pager button{ background:var(--surface-2); border:1px solid var(--line); color:var(--text-dim); border-radius:6px; padding:5px 10px; cursor:pointer; font-family:var(--font-mono); }
   .pager button:hover{ color:var(--text); border-color: var(--wheat); }
   .pager button:disabled{ opacity:.35; cursor:not-allowed; }
-
   footer{ text-align:center; color:var(--text-faint); font-size:11.5px; padding:26px 0 6px; }
   .skeleton{ color:var(--text-faint); font-size:13px; font-family:var(--font-mono); padding:30px; text-align:center; }
 </style>
@@ -159,7 +146,7 @@
       <div class="brand-mark"></div>
       <div class="brand-text">
         <h1>Dashboard Supervisor Pakan</h1>
-        <p>Live Data dari Google Sheets · Section-Based Update</p>
+        <p>Live Data Google Sheets · Report All & Intake/Hd</p>
       </div>
     </div>
     <div class="status-row">
@@ -212,30 +199,35 @@
       </div>
     </div>
 
-    <div class="panel">
-      <div class="section-title"><span class="num">01</span> Tren Total Pakan Harian</div>
-      <canvas id="trendChart"></canvas>
+    <div class="grid-2">
+      <div class="panel">
+        <div class="section-title"><span class="num">01</span> Tren Total Pakan Harian (Kg)</div>
+        <canvas id="trendChart"></canvas>
+      </div>
+      <div class="panel">
+        <div class="section-title"><span class="num">02</span> Intake per Ekor (Kg/Hd)</div>
+        <canvas id="intakeChart"></canvas>
+      </div>
     </div>
 
     <div class="grid-2">
       <div class="panel">
-        <div class="section-title"><span class="num">02</span> Komparasi Usage per Section (Fresh, Early, Late, dll)</div>
+        <div class="section-title"><span class="num">03</span> Komparasi Usage per Section</div>
         <canvas id="sectionBarChart"></canvas>
       </div>
       <div class="panel">
-        <div class="section-title"><span class="num">03</span> Distribusi Waktu Pemberian (Shift)</div>
+        <div class="section-title"><span class="num">04</span> Distribusi Waktu Pemberian (Shift)</div>
         <canvas id="timeChart"></canvas>
       </div>
     </div>
 
     <div class="panel">
-      <div class="section-title"><span class="num">04</span> Rekap Pemakaian Seluruh Bahan Baku (Kg)</div>
-      <div class="ingred-grid" id="allIngredientsGrid">
-        </div>
+      <div class="section-title"><span class="num">05</span> Rekap Pemakaian Seluruh Bahan Baku (Kg)</div>
+      <div class="ingred-grid" id="allIngredientsGrid"></div>
     </div>
 
     <div class="panel">
-      <div class="section-title"><span class="num">05</span> Data Log Rinci (Report All)</div>
+      <div class="section-title"><span class="num">06</span> Data Log Rinci (Report All) - Geser ke Kanan</div>
       <div class="table-controls">
         <input type="text" id="searchBox" placeholder="Cari section / shift / tanggal…" style="min-width:240px;">
       </div>
@@ -255,19 +247,21 @@
   </div>
 
   <div class="skeleton" id="loadingMsg">Menganalisis data dari Google Sheets…</div>
-
   <footer>Sistem Khusus Supervisor · Memantau Report All secara Real-time</footer>
 </div>
 
 <script>
 const SHEET_ID = '1-2wG1wWuN6AFAoS5xNfoM4l_xYVszSWUcHQ-6pFScKI';
-const currentGid = '555405306'; // Tab Report All
+const GID_REPORT = '555405306'; // Report All
+const GID_INTAKE = '772205146'; // Intake/Hd
 
 const INGREDIENT_COLS = ['Oaten hay','Alfalfa','Indigofera','Sisa Pakan','Rumput Odot','Tebon Jagung','Corn Silage','SBM','Wheat Pollard','DDGS','CGF','Bungkil Kopra','Bungkil Sawit','Ampok Jagung','Canola','CFP','Soy Bean Cake','Palm Kernel Dry','Rice DDGS','Garam','Molases','Air','DCP','Limestone','Netral AHA','Sodium Bicarbonate','Premix Lact','Premix Trans','Premix Dry','Nutricab','Bentonite'];
 const FORAGES = ['Oaten hay','Alfalfa','Indigofera','Rumput Odot','Tebon Jagung','Corn Silage'];
 
 let rawRows = [];
 let filteredRows = [];
+let intakeDataRaw = [];
+let filteredIntakeRows = [];
 let tablePage = 0;
 const PAGE_SIZE = 40;
 let charts = {};
@@ -281,12 +275,7 @@ function setStatus(mode, text){
 }
 function showError(msg){ const b = $('errBanner'); b.innerHTML = msg; b.classList.add('show'); }
 function hideError(){ $('errBanner').classList.remove('show'); }
-
-function parseNum(v){
-  if(!v) return 0;
-  const n = parseFloat(String(v).replace(/["']/g,'').replace(/,/g,''));
-  return isNaN(n) ? 0 : n;
-}
+function parseNum(v){ if(!v) return 0; const n = parseFloat(String(v).replace(/["']/g,'').replace(/,/g,'')); return isNaN(n) ? 0 : n; }
 
 function parseDate(s){
   if(!s) return null;
@@ -315,23 +304,37 @@ function fmtNum(n){ return Math.round(n).toLocaleString('id-ID'); }
 async function loadData(){
   $('loadingMsg').style.display = 'block'; $('content').style.display = 'none';
   setStatus('', 'Memuat…'); hideError();
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${currentGid}`;
+  
+  let textReport = null;
+  let textIntake = null;
 
-  try{
-    const res = await fetch(url);
-    if(!res.ok) throw new Error('HTTP Error: ' + res.status);
-    const text = await res.text();
-    if(text.trim().startsWith('<')) throw new Error('Akses ditolak (Bukan Publik)');
-    processCSV(text);
+  try {
+    const resReport = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID_REPORT}`);
+    if(resReport.ok) textReport = await resReport.text();
+  } catch(e) { console.error("Error Report", e); }
+
+  try {
+    const resIntake = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID_INTAKE}`);
+    if(resIntake.ok) textIntake = await resIntake.text();
+  } catch(e) { console.error("Error Intake", e); }
+
+  try {
+    if(!textReport || textReport.trim().startsWith('<')) throw new Error('Akses Google Sheets Ditolak.');
+    processReportCSV(textReport);
+    
+    if(textIntake && !textIntake.trim().startsWith('<')){
+        processIntakeCSV(textIntake);
+    }
+    
     setStatus('live', 'Live · diperbarui ' + new Date().toLocaleTimeString('id-ID'));
-  }catch(err){
+  } catch(err) {
     setStatus('err', 'Gagal memuat data');
-    showError(`<b>Terjadi Kesalahan:</b> <code>${err.message}</code><br>Pastikan Google Sheets Anda sudah diatur menjadi <b>Anyone with the link</b>.`);
+    showError(`<b>Terjadi Kesalahan:</b> <code>${err.message}</code>`);
     $('loadingMsg').style.display = 'none';
   }
 }
 
-function processCSV(text){
+function processReportCSV(text){
   const parsed = Papa.parse(text, {skipEmptyLines:true});
   const rows = parsed.data;
   if(rows.length === 0) throw new Error('Data Spreadsheet kosong.');
@@ -340,16 +343,10 @@ function processCSV(text){
       let rowText = r.join(' ').toLowerCase();
       return rowText.includes('tebon') && rowText.includes('sbm');
   });
-
-  if(headerIdx === -1) {
-      throw new Error(`Gagal mendeteksi kolom bahan pakan di tab Report All.`);
-  }
+  if(headerIdx === -1) throw new Error(`Gagal mendeteksi kolom bahan pakan di tab Report All.`);
 
   const headers = rows[headerIdx].map(h => String(h).trim().replace(/\n/g, ' '));
-  headers[0] = 'Date';
-  headers[1] = 'Section';
-  headers[2] = 'Phase';
-  headers[3] = 'Time';
+  headers[0] = 'Date'; headers[1] = 'Section'; headers[2] = 'Phase'; headers[3] = 'Time';
 
   const dataRows = rows.slice(headerIdx + 1);
   rawRows = [];
@@ -358,29 +355,21 @@ function processCSV(text){
       const r = dataRows[i];
       const dateRaw = String(r[0]).trim();
       const dateObj = parseDate(dateRaw);
-      
       if (!dateObj) continue; 
 
       const obj = {};
-      
       let total = 0, forage = 0, conc = 0;
       INGREDIENT_COLS.forEach(col => {
           let hIdx = headers.findIndex(h => h.toLowerCase() === col.toLowerCase());
-          let val = 0;
-          if (hIdx !== -1 && hIdx < r.length) {
-              val = parseNum(r[hIdx]);
-          }
+          let val = (hIdx !== -1 && hIdx < r.length) ? parseNum(r[hIdx]) : 0;
           obj[col] = val; 
           total += val;
           if(FORAGES.includes(col)) forage += val;
           else if(col !== 'Air' && col !== 'Sisa Pakan') conc += val;
       });
 
-      // MENGUBAH PENGELOMPOKAN DARI PHASE KE SECTION
       let sec = (r[1] || '').trim().toUpperCase();
       if (!sec || sec === '-') sec = 'LAINNYA';
-      
-      // Standardisasi Nama Section agar rapi
       if(sec.includes('FRESH')) sec = 'FRESH';
       else if(sec.includes('EARLY')) sec = 'EARLY';
       else if(sec.includes('LATE')) sec = 'LATE';
@@ -392,20 +381,44 @@ function processCSV(text){
       if (!tm || tm === '-') tm = 'TIDAK DIKETAHUI';
 
       rawRows.push({
-          dateStr: dateRaw, date: dateObj,
-          section: sec, time: tm, // Menggunakan section, bukan phase
+          dateStr: dateRaw, date: dateObj, section: sec, time: tm,
           total: total, forage: forage, conc: conc, raw: obj
       });
   }
-
-  if (rawRows.length === 0) {
-      throw new Error("Data tabel ditemukan, namun angka-angka tidak terbaca.");
-  }
-
+  if (rawRows.length === 0) throw new Error("Data tabel ditemukan, namun angka-angka tidak terbaca.");
+  
   populateFilters();
   applyFiltersAndRender();
   $('loadingMsg').style.display = 'none';
   $('content').style.display = 'block';
+}
+
+function processIntakeCSV(text){
+  const parsed = Papa.parse(text, {skipEmptyLines:true});
+  const rows = parsed.data;
+  intakeDataRaw = [];
+
+  let headerIdx = rows.findIndex(r => r.some(cell => String(cell).toUpperCase().includes('FRESH')));
+  if (headerIdx === -1) return;
+
+  let headers = rows[headerIdx].map(h => String(h).trim().toUpperCase());
+  const getIdx = (name) => headers.lastIndexOf(name); // Ambil Intake (sebelah kanan), bukan populasi (kiri)
+
+  let iF = getIdx('FRESH'), iE = getIdx('EARLY'), iL = getIdx('LATE'), iD = getIdx('DRY'), iY = getIdx('YEARLING');
+  if (iF === -1) iF = 16; if (iE === -1) iE = 17; if (iL === -1) iL = 18; if (iD === -1) iD = 19; if (iY === -1) iY = 20;
+
+  for (let i = headerIdx + 1; i < rows.length; i++) {
+      const r = rows[i];
+      const dateRaw = String(r[0]).trim();
+      const dateObj = parseDate(dateRaw);
+      if (!dateObj) continue;
+
+      intakeDataRaw.push({
+          dateStr: dateRaw, date: dateObj,
+          FRESH: parseNum(r[iF]), EARLY: parseNum(r[iE]), LATE: parseNum(r[iL]),
+          DRY: parseNum(r[iD]), YEARLING: parseNum(r[iY])
+      });
+  }
 }
 
 function populateFilters(){
@@ -431,9 +444,16 @@ function applyFiltersAndRender(){
     if(sec !== 'ALL' && r.section !== sec) return false;
     return true;
   });
+  
+  filteredIntakeRows = intakeDataRaw.filter(r => {
+    if(fromD && r.date < fromD) return false;
+    if(toD && r.date > toD) return false;
+    return true;
+  });
 
   renderKPIs();
   renderTrendChart();
+  renderIntakeChart();
   renderSectionBarChart();
   renderTimeChart();
   renderAllIngredients();
@@ -451,17 +471,13 @@ function renderKPIs(){
   $('kpiTotalSub').textContent = days + ' hari terpilih';
   $('kpiAvg').innerHTML = fmtNum(total/days) + '<span>kg/hari</span>';
 
-  // Rasio Hijauan vs Konsentrat
   const sumRatio = totalForage + totalConc;
   if(sumRatio > 0){
-      const pctForage = ((totalForage/sumRatio)*100).toFixed(1);
-      const pctConc = ((totalConc/sumRatio)*100).toFixed(1);
-      $('kpiRatio').innerHTML = `${pctForage}% : ${pctConc}%`;
+      $('kpiRatio').innerHTML = `${((totalForage/sumRatio)*100).toFixed(1)}% : ${((totalConc/sumRatio)*100).toFixed(1)}%`;
   } else {
       $('kpiRatio').innerHTML = `- : -`;
   }
 
-  // Top Section
   const bySection = {};
   filteredRows.forEach(r => { bySection[r.section] = (bySection[r.section]||0) + r.total; });
   const top = Object.entries(bySection).sort((a,b)=>b[1]-a[1])[0];
@@ -476,7 +492,7 @@ function destroyChart(key){ if(charts[key]){ charts[key].destroy(); delete chart
 function chartColors(){
   return {
     grid: 'rgba(255,255,255,0.06)', text: '#a9b6ac', wheat: '#cf9f4f', wheatSoft: '#e4bf7a',
-    palette: ['#cf9f4f','#6fa287','#c1502e','#8ea3d1','#c98fd1','#d1b06c','#7fb8c9','#b2955b', '#5c8072', '#a67246']
+    palette: ['#6fa287','#cf9f4f','#c1502e','#8ea3d1','#d1b06c','#7fb8c9','#b2955b', '#5c8072', '#a67246']
   };
 }
 
@@ -503,6 +519,40 @@ function renderTrendChart(){
   });
 }
 
+function renderIntakeChart(){
+  const c = chartColors();
+  const dates = filteredIntakeRows.map(r => r.dateStr);
+  const sec = $('sectionFilter').value;
+  const datasets = [];
+  const phases = ['FRESH', 'EARLY', 'LATE', 'DRY', 'YEARLING'];
+  
+  phases.forEach((ph, i) => {
+     if(sec === 'ALL' || sec === ph) {
+         datasets.push({
+             label: ph,
+             data: filteredIntakeRows.map(r => r[ph]),
+             borderColor: c.palette[i % c.palette.length],
+             backgroundColor: c.palette[i % c.palette.length],
+             tension: .35, pointRadius: 2, fill: false, borderWidth:2
+         });
+     }
+  });
+
+  destroyChart('intake');
+  charts.intake = new Chart($('intakeChart'), {
+    type:'line',
+    data:{ labels: dates, datasets: datasets },
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      plugins:{ legend:{display:true, position:'bottom', labels:{color:c.text, font:{size:11}, boxWidth: 12}} },
+      scales:{
+        x:{ ticks:{color:c.text, font:{family:"'IBM Plex Mono'", size:10}}, grid:{color:c.grid} },
+        y:{ ticks:{color:c.text, font:{family:"'IBM Plex Mono'", size:10}}, grid:{color:c.grid} }
+      }
+    }
+  });
+}
+
 function renderSectionBarChart(){
   const c = chartColors();
   const bySection = {};
@@ -510,8 +560,6 @@ function renderSectionBarChart(){
   delete bySection['LAINNYA'];
   
   const entries = Object.entries(bySection);
-  
-  // Mengurutkan bar chart sesuai siklus hidup sapi agar rapi di grafik
   const logicalOrder = {'FRESH':1, 'EARLY':2, 'LATE':3, 'DRY':4, 'YEARLING':5, 'HR':6};
   entries.sort((a,b) => (logicalOrder[a[0]] || 99) - (logicalOrder[b[0]] || 99));
 
@@ -559,49 +607,31 @@ function renderTimeChart(){
 function renderAllIngredients(){
   const totals = {};
   INGREDIENT_COLS.forEach(col => totals[col] = 0);
-  
-  filteredRows.forEach(r => {
-    INGREDIENT_COLS.forEach(col => { totals[col] += (r.raw[col] || 0); });
-  });
-  
+  filteredRows.forEach(r => { INGREDIENT_COLS.forEach(col => { totals[col] += (r.raw[col] || 0); }); });
   const sorted = Object.entries(totals).filter(e => e[1] > 0).sort((a,b) => b[1] - a[1]);
   
   const grid = $('allIngredientsGrid');
-  if(sorted.length === 0){
-      grid.innerHTML = `<div style="color:var(--text-faint); grid-column:1/-1;">Tidak ada pemakaian bahan di periode ini.</div>`;
-      return;
-  }
-
-  grid.innerHTML = sorted.map(e => `
-    <div class="ingred-card">
-      <div class="name" title="${e[0]}">${e[0]}</div>
-      <div class="val">${fmtNum(e[1])}<span>kg</span></div>
-    </div>
-  `).join('');
+  if(sorted.length === 0){ grid.innerHTML = `<div style="color:var(--text-faint); grid-column:1/-1;">Tidak ada pemakaian bahan di periode ini.</div>`; return; }
+  grid.innerHTML = sorted.map(e => `<div class="ingred-card"><div class="name" title="${e[0]}">${e[0]}</div><div class="val">${fmtNum(e[1])}<span>kg</span></div></div>`).join('');
 }
 
 function renderTable(){
-  const displayCols = ['Date','Section','Time','Tebon Jagung','Corn Silage','SBM','Total'];
+  // Menampilkan SELURUH 31 bahan pakan di dalam tabel
+  const displayCols = ['Date','Section','Time', ...INGREDIENT_COLS, 'Total'];
   $('tableHead').innerHTML = displayCols.map(c=>`<th>${c}</th>`).join('');
 
   const search = $('searchBox').value.trim().toLowerCase();
   let rows = filteredRows;
-  if(search){
-    rows = rows.filter(r => (r.dateStr+r.section+r.time).toLowerCase().includes(search));
-  }
+  if(search){ rows = rows.filter(r => (r.dateStr+r.section+r.time).toLowerCase().includes(search)); }
   rows = [...rows].sort((a,b)=> b.date - a.date);
 
   const start = tablePage * PAGE_SIZE;
   const pageRows = rows.slice(start, start+PAGE_SIZE);
 
-  $('tableBody').innerHTML = pageRows.map(r => `
-    <tr>
-      <td>${r.dateStr}</td><td>${r.section}</td><td>${r.time}</td>
-      <td class="num">${fmtNum(r.raw['Tebon Jagung'] || 0)}</td>
-      <td class="num">${fmtNum(r.raw['Corn Silage'] || 0)}</td>
-      <td class="num">${fmtNum(r.raw['SBM'] || 0)}</td>
-      <td class="num">${fmtNum(r.total)}</td>
-    </tr>`).join('') || '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-faint);">Tidak ada data.</td></tr>';
+  $('tableBody').innerHTML = pageRows.map(r => {
+    let ingredTds = INGREDIENT_COLS.map(col => `<td class="num">${fmtNum(r.raw[col] || 0)}</td>`).join('');
+    return `<tr><td>${r.dateStr}</td><td>${r.section}</td><td>${r.time}</td>${ingredTds}<td class="num" style="color:var(--wheat-soft); font-weight:600;">${fmtNum(r.total)}</td></tr>`;
+  }).join('') || '<tr><td colspan="35" style="text-align:center; padding:24px; color:var(--text-faint);">Tidak ada data.</td></tr>';
 
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   $('pageInfo').textContent = `Halaman ${tablePage+1} / ${totalPages} · ${rows.length} baris`;
