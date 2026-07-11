@@ -21,7 +21,7 @@
                 radial-gradient(ellipse 700px 500px at 100% 10%, rgba(111,162,135,0.07), transparent), var(--bg);
     color: var(--text); font-family: var(--font-body); min-height: 100vh; padding: clamp(16px, 3vw, 40px);
   }
-  .wrap{ max-width: 1320px; margin: 0 auto; }
+  .wrap{ max-width: 1360px; margin: 0 auto; }
 
   /* Header */
   header{ display:flex; justify-content:space-between; align-items:flex-end; gap:20px; flex-wrap: wrap; padding-bottom: 22px; margin-bottom: 22px; border-bottom: 1px solid var(--line); }
@@ -36,35 +36,35 @@
   .dot.live{ background: var(--pasture); box-shadow:0 0 0 3px rgba(111,162,135,0.18); animation:pulse 2s infinite; }
   .dot.err{ background: var(--rust); box-shadow:0 0 0 3px rgba(193,80,46,0.18); }
   @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.45;} }
-  button.refresh{ font-family: var(--font-body); font-weight:600; font-size:13px; color: var(--bg); background: var(--wheat-soft); border:none; padding:9px 16px; border-radius:20px; cursor:pointer; transition: transform .15s ease, background .15s ease; }
-  button.refresh:hover{ background: var(--wheat); transform: translateY(-1px); }
-  button.refresh:active{ transform: translateY(0); }
+  
+  button.action-btn{ font-family: var(--font-body); font-weight:600; font-size:13px; color: var(--bg); background: var(--wheat-soft); border:none; padding:9px 16px; border-radius:20px; cursor:pointer; transition: transform .15s ease, background .15s ease; display:flex; align-items:center; gap:6px;}
+  button.action-btn:hover{ filter:brightness(1.1); transform: translateY(-1px); }
+  button.action-btn:active{ transform: translateY(0); }
 
   /* Controls & Settings */
-  .controls{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom: 26px; }
+  .controls-wrap { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 26px; flex-wrap:wrap; gap:16px;}
+  .controls{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
   .field{ display:flex; flex-direction:column; gap:5px; }
   .field label{ font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.06em; font-weight:600;}
   select, input[type=text]{ font-family: var(--font-mono); font-size:13px; color:var(--text); background: var(--surface); border:1px solid var(--line); border-radius:8px; padding:8px 10px; outline:none; min-width:120px; }
   select:focus, input[type=text]:focus{ border-color: var(--wheat); }
-  .settings-toggle{ font-family: var(--font-mono); font-size:12px; color:var(--text-faint); background:none; border:1px dashed var(--line); padding:8px 12px; border-radius:8px; cursor:pointer; margin-left:auto; }
+  .settings-toggle{ font-family: var(--font-mono); font-size:12px; color:var(--text-faint); background:none; border:1px dashed var(--line); padding:8px 12px; border-radius:8px; cursor:pointer; }
   .settings-toggle:hover{ color:var(--text-dim); border-color:var(--text-faint); }
   .settings-panel{ display:none; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:22px; font-size:13px; color:var(--text-dim); line-height:1.6; }
   .settings-panel.open{ display:block; }
-  .settings-panel code{ font-family:var(--font-mono); background:var(--surface-2); padding:1px 5px; border-radius:4px; color:var(--wheat-soft); }
-  .settings-panel .row{ display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; align-items:center; }
-
+  
   /* Banner */
   .banner{ display:none; background: rgba(193,80,46,0.12); border:1px solid rgba(193,80,46,0.4); color: var(--rust-soft); padding:14px 16px; border-radius:10px; font-size:13.5px; margin-bottom:22px; line-height:1.6; }
   .banner.show{ display:block; }
 
   /* KPIs */
-  .kpi-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:14px; margin-bottom: 26px; }
-  .kpi{ background: var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px 20px; position:relative; overflow:hidden; }
+  .kpi-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap:14px; margin-bottom: 26px; }
+  .kpi{ background: var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px; position:relative; overflow:hidden; display:flex; flex-direction:column; justify-content:center;}
   .kpi::after{ content:''; position:absolute; right:-30px; top:-30px; width:90px; height:90px; border-radius:50%; background: radial-gradient(circle, rgba(207,159,79,0.08), transparent 70%); }
   .kpi .label{ font-size:11.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; font-weight:600;}
-  .kpi .value{ font-family: var(--font-mono); font-size:26px; font-weight:600; color:var(--text); }
-  .kpi .value span{ font-size:14px; color:var(--text-dim); font-weight:400; margin-left:4px; }
-  .kpi .sub{ font-size:12px; color:var(--text-dim); margin-top:6px; line-height:1.4;}
+  .kpi .value{ font-family: var(--font-mono); font-size:24px; font-weight:600; color:var(--text); transition: color 0.3s;}
+  .kpi .value span{ font-size:13px; color:var(--text-dim); font-weight:400; margin-left:4px; }
+  .kpi .sub{ font-size:11.5px; color:var(--text-dim); margin-top:6px; line-height:1.4;}
   .kpi.accent .value{ color: var(--wheat-soft); }
   .kpi.pasture .value{ color: var(--pasture); }
 
@@ -74,16 +74,15 @@
   .panel{ background: var(--surface); border:1px solid var(--line); border-radius:16px; padding:22px; margin-bottom:22px; }
   .grid-2{ display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
   @media(max-width:900px){ .grid-2{ grid-template-columns:1fr; } }
-  canvas{ max-height:320px; }
+  canvas{ max-height:300px; }
 
   /* Ingredients Grid */
-  .ingred-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 10px; }
+  .ingred-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 10px; }
   .ingred-grid::-webkit-scrollbar { width: 6px; }
   .ingred-grid::-webkit-scrollbar-thumb { background: var(--line); border-radius: 10px; }
-  .ingred-card { background: var(--surface-2); padding: 12px 14px; border-radius: 8px; border: 1px solid var(--line); transition: transform 0.1s; }
-  .ingred-card:hover { border-color: var(--wheat-soft); transform: translateY(-2px); }
+  .ingred-card { background: var(--surface-2); padding: 12px; border-radius: 8px; border: 1px solid var(--line); transition: transform 0.1s; }
   .ingred-card .name { font-size: 11.5px; color: var(--text-dim); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
-  .ingred-card .val { font-family: var(--font-mono); font-size: 16px; color: var(--text); font-weight: 600; }
+  .ingred-card .val { font-family: var(--font-mono); font-size: 15px; color: var(--text); font-weight: 600; }
   .ingred-card .val span { font-size: 10px; color: var(--text-faint); margin-left: 2px; }
 
   /* Table Horizontal Scroll Force */
@@ -99,10 +98,26 @@
   
   .pager{ display:flex; gap:8px; align-items:center; margin-top:12px; font-size:12.5px; color:var(--text-dim); font-family:var(--font-mono); }
   .pager button{ background:var(--surface-2); border:1px solid var(--line); color:var(--text-dim); border-radius:6px; padding:5px 10px; cursor:pointer; font-family:var(--font-mono); }
-  .pager button:hover{ color:var(--text); border-color: var(--wheat); }
   .pager button:disabled{ opacity:.35; cursor:not-allowed; }
-  footer{ text-align:center; color:var(--text-faint); font-size:11.5px; padding:26px 0 6px; }
-  .skeleton{ color:var(--text-faint); font-size:13px; font-family:var(--font-mono); padding:30px; text-align:center; }
+  
+  /* Print Optimization */
+  @media print {
+      body { background: white; color: black; padding: 0; }
+      header, .controls-wrap, .settings-panel, .pager, .table-controls, .table-scroll::-webkit-scrollbar { display: none !important; }
+      .kpi-grid { grid-template-columns: repeat(5, 1fr); gap: 8px; }
+      .kpi { padding: 10px; border: 1px solid #ddd; background: white; }
+      .kpi .value, .kpi.accent .value, .kpi.pasture .value { color: black !important; }
+      .kpi .sub, .kpi .label { color: #555 !important; }
+      .panel { border: 1px solid #ddd; box-shadow: none; break-inside: avoid; background: white; padding:15px; margin-bottom: 15px;}
+      .table-scroll { max-height: none; overflow: visible; border: none; }
+      table { font-size: 9px; }
+      thead th { background: #eee; color: black; border-bottom: 1px solid #ccc; }
+      tbody td { border-bottom: 1px solid #eee; color: black; }
+      .section-title { color: black; border-bottom: 1px solid #eee; padding-bottom:5px;}
+      .ingred-card { border: 1px solid #eee; background: #fafafa; }
+      .ingred-card .val, .ingred-card .name { color: black; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
 </style>
 </head>
 <body>
@@ -113,41 +128,47 @@
       <div class="brand-mark"></div>
       <div class="brand-text">
         <h1>Dashboard Supervisor Pakan</h1>
-        <p>Live Data Google Sheets · Report All & Intake/Hd (v6)</p>
+        <p>Live Data Google Sheets · Sistem Analitik Terpadu (v7)</p>
       </div>
     </div>
     <div class="status-row">
       <div class="status-pill"><span class="dot" id="statusDot"></span><span id="statusText">Memuat…</span></div>
-      <button class="refresh" id="refreshBtn">Refresh data</button>
+      <button class="action-btn" id="refreshBtn">Refresh data</button>
     </div>
   </header>
 
   <div class="banner" id="errBanner"></div>
 
-  <div class="controls">
-    <div class="field">
-      <label>Tanggal mulai</label>
-      <select id="dateFrom"></select>
-    </div>
-    <div class="field">
-      <label>Tanggal akhir</label>
-      <select id="dateTo"></select>
-    </div>
-    <div class="field">
-      <label>Section Kandang</label>
-      <select id="sectionFilter">
-        <option value="ALL">Semua Section</option>
-      </select>
-    </div>
-    <button class="settings-toggle" id="settingsToggle">⚙ GID Database</button>
+  <div class="controls-wrap">
+      <div class="controls">
+        <div class="field"><label>Tanggal mulai</label><select id="dateFrom"></select></div>
+        <div class="field"><label>Tanggal akhir</label><select id="dateTo"></select></div>
+        <div class="field"><label>Section</label>
+          <select id="sectionFilter"><option value="ALL">Semua Section</option></select>
+        </div>
+        <div class="field"><label>Shift Waktu</label>
+          <select id="shiftFilter">
+            <option value="ALL">Semua Shift</option>
+            <option value="PAGI">Pagi</option>
+            <option value="SIANG">Siang</option>
+            <option value="MALAM">Malam</option>
+          </select>
+        </div>
+        <button class="settings-toggle" id="settingsToggle" style="margin-top:16px;">⚙ GID Database</button>
+      </div>
+      <div class="controls">
+          <button class="action-btn" id="btnExport" style="background:var(--pasture);">📥 Ekspor CSV</button>
+          <button class="action-btn" id="btnPrint" style="background:#8ea3d1; color:#161f1a;">🖨️ Cetak PDF</button>
+      </div>
   </div>
 
   <div class="settings-panel" id="settingsPanel">
-    Pastikan GID (ID Tab) di bawah ini sesuai dengan link Google Sheets Anda. Jika tab dihapus/dibuat ulang, GID akan berubah.
+    Pastikan GID (ID Tab) di bawah ini sesuai dengan link Google Sheets Anda.
     <div class="row">
-      <div class="field"><label>GID Tab Report All</label><input type="text" id="gidReportInput" value="555405306"></div>
-      <div class="field"><label>GID Tab Intake/Hd</label><input type="text" id="gidIntakeInput" value="1157965826"></div>
-      <button class="refresh" id="applyGid" style="margin-top:14px;">Terapkan &amp; Refresh</button>
+      <div class="field"><label>Report All</label><input type="text" id="gidReportInput" value="555405306"></div>
+      <div class="field"><label>Intake/Hd</label><input type="text" id="gidIntakeInput" value="772205146"></div>
+      <div class="field"><label>Refusal</label><input type="text" id="gidRefusalInput" value="158796666"></div>
+      <button class="action-btn" id="applyGid" style="margin-top:14px;">Terapkan &amp; Refresh</button>
     </div>
   </div>
 
@@ -162,15 +183,20 @@
       <div class="kpi pasture">
         <div class="label">Rasio Hijauan : Konsentrat</div>
         <div class="value" id="kpiRatio">– : –</div>
-        <div class="sub">Persentase (%) dari total</div>
+        <div class="sub">Persentase (%) keseimbangan</div>
       </div>
       <div class="kpi">
-        <div class="label">Rata-rata Konsumsi (Intake)</div>
+        <div class="label">Rata-rata Intake</div>
         <div class="value" id="kpiAvg">–<span>kg/ekor</span></div>
-        <div class="sub" id="kpiAvgSub">Perhitungan: TMR / Populasi Aktual</div>
+        <div class="sub" id="kpiAvgSub">TMR / Aktual Populasi</div>
       </div>
       <div class="kpi">
-        <div class="label">Section Konsumsi Terbesar</div>
+        <div class="label">Refusal Rate (Sisa)</div>
+        <div class="value" id="kpiRefusal">–<span>%</span></div>
+        <div class="sub" id="kpiRefusalSub">Total Sisa Pakan</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Konsumsi Terbesar</div>
         <div class="value" id="kpiTopSection">–</div>
         <div class="sub" id="kpiTopSectionSub">–</div>
       </div>
@@ -204,7 +230,7 @@
     </div>
 
     <div class="panel">
-      <div class="section-title"><span class="num">06</span> Data Log Rinci (Report All) <span style="font-size:12px; color:var(--wheat-soft); margin-left:8px; font-weight:400; padding: 2px 8px; border:1px solid var(--line); border-radius:12px;">↔ Geser tabel ke kanan untuk cek 31 bahan</span></div>
+      <div class="section-title"><span class="num">06</span> Data Log Rinci (Report All) <span style="font-size:12px; color:var(--wheat-soft); margin-left:8px; font-weight:400; padding: 2px 8px; border:1px solid var(--line); border-radius:12px;">↔ Geser tabel ke kanan</span></div>
       <div class="table-controls">
         <input type="text" id="searchBox" placeholder="Cari section / shift / tanggal…" style="min-width:240px;">
       </div>
@@ -224,7 +250,7 @@
   </div>
 
   <div class="skeleton" id="loadingMsg">Menganalisis data dari Google Sheets…</div>
-  <footer>Sistem Khusus Supervisor · Memantau Report All & Intake/Hd secara Real-time</footer>
+  <footer>Sistem Khusus Supervisor · Memantau Report All, Intake/Hd, & Refusal secara Real-time</footer>
 </div>
 
 <script>
@@ -237,6 +263,8 @@ let rawRows = [];
 let filteredRows = [];
 let intakeDataRaw = [];
 let filteredIntakeRows = [];
+let refusalDataRaw = [];
+let filteredRefusalRows = [];
 let dailyTmr = {}; 
 
 let tablePage = 0;
@@ -278,15 +306,34 @@ function parseDate(s){
 
 function fmtNum(n){ return Math.round(n).toLocaleString('id-ID'); }
 
+// Fungsi Master Normalisasi Nama Section (Mapping SC, HP, HO, Transisi, dll)
+function normalizeSection(rawSection) {
+    let s = (rawSection || '').trim().toUpperCase();
+    if(!s || s === '-') return 'LAINNYA';
+    
+    if(s.includes('SC')) return 'FRESH';
+    else if(s.includes('HP') || s.includes('HO') || s.includes('TRANSISI') || s.includes('TRANSITION')) return 'DRY';
+    else if(s.includes('FRESH')) return 'FRESH';
+    else if(s.includes('EARLY')) return 'EARLY';
+    else if(s.includes('LATE')) return 'LATE';
+    else if(s.includes('DRY')) return 'DRY';
+    else if(s.includes('YEARLING')) return 'YEARLING';
+    else if(s.includes('HR')) return 'HR';
+    
+    return 'LAINNYA';
+}
+
 async function loadData(){
   $('loadingMsg').style.display = 'block'; $('content').style.display = 'none';
   setStatus('', 'Memuat…'); hideError();
   
   let gidReport = $('gidReportInput').value.trim();
   let gidIntake = $('gidIntakeInput').value.trim();
+  let gidRefusal = $('gidRefusalInput').value.trim();
   
   let textReport = null;
   let textIntake = null;
+  let textRefusal = null;
 
   try {
     const resReport = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gidReport}`);
@@ -297,16 +344,18 @@ async function loadData(){
     const resIntake = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gidIntake}`);
     if(resIntake.ok) textIntake = await resIntake.text();
   } catch(e) { console.error("Error Intake", e); }
+  
+  try {
+    const resRefusal = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gidRefusal}`);
+    if(resRefusal.ok) textRefusal = await resRefusal.text();
+  } catch(e) { console.error("Error Refusal", e); }
 
   try {
     if(!textReport || textReport.trim().startsWith('<')) throw new Error('Akses Google Sheets Ditolak atau GID Report salah.');
     processReportCSV(textReport);
     
-    if(textIntake && !textIntake.trim().startsWith('<')){
-        processIntakeCSV(textIntake);
-    } else {
-        console.warn("Intake tab empty or invalid GID.");
-    }
+    if(textIntake && !textIntake.trim().startsWith('<')) processIntakeCSV(textIntake);
+    if(textRefusal && !textRefusal.trim().startsWith('<')) processRefusalCSV(textRefusal);
     
     setStatus('live', 'Live · diperbarui ' + new Date().toLocaleTimeString('id-ID'));
   } catch(err) {
@@ -351,14 +400,8 @@ function processReportCSV(text){
           else if(col !== 'Air' && col !== 'Sisa Pakan') conc += val;
       });
 
-      let sec = (r[1] || '').trim().toUpperCase();
-      if (!sec || sec === '-') sec = 'LAINNYA';
-      if(sec.includes('FRESH')) sec = 'FRESH';
-      else if(sec.includes('EARLY')) sec = 'EARLY';
-      else if(sec.includes('LATE')) sec = 'LATE';
-      else if(sec.includes('DRY')) sec = 'DRY';
-      else if(sec.includes('YEARLING')) sec = 'YEARLING';
-      else if(sec.includes('HR')) sec = 'HR';
+      // Mapping Section otomatis
+      let sec = normalizeSection(r[1]);
       
       let tm = (r[3] || '').trim().toUpperCase();
       if (!tm || tm === '-') tm = 'TIDAK DIKETAHUI';
@@ -389,7 +432,6 @@ function processIntakeCSV(text){
   let intF=-1, intE=-1, intL=-1, intD=-1, intY=-1;
   let headerRowIdx = -1;
 
-  // Pelacak Pintar: Mencari kolom Populasi dan Intake secara dinamis
   for(let i=0; i<Math.min(rows.length, 6); i++){
      let r0 = rows[i].map(c => String(c).trim().toUpperCase());
      let r1 = (i+1 < rows.length) ? rows[i+1].map(c => String(c).trim().toUpperCase()) : [];
@@ -399,53 +441,78 @@ function processIntakeCSV(text){
 
      if(popIdx !== -1 && intIdx !== -1 && r1.includes('FRESH')) {
          headerRowIdx = i+1;
-         popF = r1.indexOf('FRESH', popIdx);
-         popE = r1.indexOf('EARLY', popIdx);
-         popL = r1.indexOf('LATE', popIdx);
-         popD = r1.indexOf('DRY', popIdx);
-         popY = r1.indexOf('YEARLING', popIdx);
-
-         intF = r1.indexOf('FRESH', intIdx);
-         intE = r1.indexOf('EARLY', intIdx);
-         intL = r1.indexOf('LATE', intIdx);
-         intD = r1.indexOf('DRY', intIdx);
-         intY = r1.indexOf('YEARLING', intIdx);
+         popF = r1.indexOf('FRESH', popIdx); popE = r1.indexOf('EARLY', popIdx); popL = r1.indexOf('LATE', popIdx); popD = r1.indexOf('DRY', popIdx); popY = r1.indexOf('YEARLING', popIdx);
+         intF = r1.indexOf('FRESH', intIdx); intE = r1.indexOf('EARLY', intIdx); intL = r1.indexOf('LATE', intIdx); intD = r1.indexOf('DRY', intIdx); intY = r1.indexOf('YEARLING', intIdx);
          break;
      }
   }
 
-  // Fallback ke Index Standar jika Gviz menghapus kolom kosong
-  if(intF === -1) {
-      headerRowIdx = 1;
-      popF=10; popE=11; popL=12; popD=13; popY=14;
-      intF=16; intE=17; intL=18; intD=19; intY=20;
-  }
+  if(intF === -1) { headerRowIdx = 1; popF=10; popE=11; popL=12; popD=13; popY=14; intF=16; intE=17; intL=18; intD=19; intY=20; }
 
   for (let i = headerRowIdx + 1; i < rows.length; i++) {
       const r = rows[i];
       if(!r || r.length === 0) continue;
-      
       const dateRaw = String(r[0]).trim();
       const dateObj = parseDate(dateRaw);
       if (!dateObj) continue;
 
-      let iF = parseNum(r[intF]); let pF = parseNum(r[popF]);
-      let iE = parseNum(r[intE]); let pE = parseNum(r[popE]);
-      let iL = parseNum(r[intL]); let pL = parseNum(r[popL]);
-      let iD = parseNum(r[intD]); let pD = parseNum(r[popD]);
-      let iY = parseNum(r[intY]); let pY = parseNum(r[popY]);
+      let iF = parseNum(r[intF]), pF = parseNum(r[popF]);
+      let iE = parseNum(r[intE]), pE = parseNum(r[popE]);
+      let iL = parseNum(r[intL]), pL = parseNum(r[popL]);
+      let iD = parseNum(r[intD]), pD = parseNum(r[popD]);
+      let iY = parseNum(r[intY]), pY = parseNum(r[popY]);
 
       if(iF===0 && iE===0 && iL===0 && iD===0 && iY===0) continue;
 
       intakeDataRaw.push({
           dateStr: dateRaw, date: dateObj, time: dateObj.getTime(),
-          intake_FRESH: iF, pop_FRESH: pF,
-          intake_EARLY: iE, pop_EARLY: pE,
-          intake_LATE: iL, pop_LATE: pL,
-          intake_DRY: iD, pop_DRY: pD,
+          intake_FRESH: iF, pop_FRESH: pF, intake_EARLY: iE, pop_EARLY: pE,
+          intake_LATE: iL, pop_LATE: pL, intake_DRY: iD, pop_DRY: pD,
           intake_YEARLING: iY, pop_YEARLING: pY
       });
   }
+}
+
+// Logika Pintar untuk menangkap Data Refusal (Format apapun)
+function processRefusalCSV(text){
+    const parsed = Papa.parse(text, {skipEmptyLines:true});
+    const rows = parsed.data;
+    refusalDataRaw = [];
+    
+    let headerIdx = rows.findIndex(r => String(r[0]).trim().toUpperCase().includes('DATE') || String(r[0]).trim().toUpperCase().includes('TANGGAL'));
+    if(headerIdx === -1) headerIdx = 0; 
+    let headers = rows[headerIdx].map(h => String(h).trim().toUpperCase());
+    
+    let isLogFormat = headers.includes('SECTION') || headers.includes('KANDANG') || headers.includes('PHASE');
+
+    for(let i=headerIdx+1; i<rows.length; i++){
+        let r = rows[i];
+        let dateRaw = String(r[0]).trim();
+        let dateObj = parseDate(dateRaw);
+        if(!dateObj) continue;
+
+        if (isLogFormat) {
+            let secIdx = headers.indexOf('SECTION') !== -1 ? headers.indexOf('SECTION') : headers.indexOf('PHASE');
+            let valIdx = headers.findIndex(h => h.includes('REFUSAL') || h.includes('SISA') || h.includes('KG') || h.includes('JUMLAH'));
+            if(valIdx === -1) valIdx = 2; // Tebakan
+            
+            let sec = normalizeSection(r[secIdx]);
+            let val = parseNum(r[valIdx]);
+            if(val > 0) refusalDataRaw.push({dateStr: dateRaw, date: dateObj, section: sec, value: val});
+        } else {
+            // Mode Pivot seperti tabel Intake
+            const phasesToFind = ['FRESH', 'EARLY', 'LATE', 'DRY', 'YEARLING', 'HR', 'SC', 'HP', 'HO', 'TRANSISI'];
+            phasesToFind.forEach(ph => {
+                let pIdx = headers.indexOf(ph);
+                if(pIdx !== -1) {
+                    let val = parseNum(r[pIdx]);
+                    if(val > 0) {
+                        refusalDataRaw.push({dateStr: dateRaw, date: dateObj, section: normalizeSection(ph), value: val});
+                    }
+                }
+            });
+        }
+    }
 }
 
 function populateFilters(){
@@ -464,17 +531,26 @@ function applyFiltersAndRender(){
   const fromD = parseDate($('dateFrom').value);
   const toD = parseDate($('dateTo').value);
   const sec = $('sectionFilter').value;
+  const shift = $('shiftFilter').value;
 
   filteredRows = rawRows.filter(r => {
     if(fromD && r.date < fromD) return false;
     if(toD && r.date > toD) return false;
     if(sec !== 'ALL' && r.section !== sec) return false;
+    if(shift !== 'ALL' && r.time !== shift) return false;
     return true;
   });
   
   filteredIntakeRows = intakeDataRaw.filter(r => {
     if(fromD && r.date < fromD) return false;
     if(toD && r.date > toD) return false;
+    return true;
+  });
+  
+  filteredRefusalRows = refusalDataRaw.filter(r => {
+    if(fromD && r.date < fromD) return false;
+    if(toD && r.date > toD) return false;
+    if(sec !== 'ALL' && r.section !== sec) return false;
     return true;
   });
 
@@ -504,6 +580,20 @@ function renderKPIs(){
       $('kpiRatio').innerHTML = `- : -`;
   }
 
+  // Refusal Rate (Menggabungkan tab khusus refusal + kolom 'Sisa Pakan' di report all)
+  let totalRefusal = 0;
+  filteredRefusalRows.forEach(r => totalRefusal += r.value);
+  filteredRows.forEach(r => totalRefusal += (r.raw['Sisa Pakan'] || 0));
+  
+  let refusalRate = total > 0 ? (totalRefusal / total) * 100 : 0;
+  $('kpiRefusal').innerHTML = `${refusalRate.toFixed(1)}<span>%</span>`;
+  $('kpiRefusalSub').textContent = `${fmtNum(totalRefusal)} kg sisa pakan`;
+  if(refusalRate > 5) {
+      $('kpiRefusal').style.color = 'var(--rust-soft)';
+  } else {
+      $('kpiRefusal').style.color = 'var(--text)'; // Reset to default
+  }
+
   // Rata-rata Tertimbang (Weighted Average)
   let totalPopCalculated = 0;
   let totalPakanForPop = 0;
@@ -530,10 +620,8 @@ function renderKPIs(){
   if (totalPopCalculated > 0) {
       let avgPerHd = totalPakanForPop / totalPopCalculated;
       $('kpiAvg').innerHTML = avgPerHd.toFixed(3) + '<span>kg/ekor</span>';
-      $('kpiAvgSub').textContent = `Total Pakan / Total Populasi`;
   } else {
       $('kpiAvg').innerHTML = '0<span>kg/ekor</span>';
-      $('kpiAvgSub').textContent = 'Data Intake/Populasi kosong';
   }
 
   // Top Section
@@ -547,13 +635,7 @@ function renderKPIs(){
 }
 
 function destroyChart(key){ if(charts[key]){ charts[key].destroy(); delete charts[key]; } }
-
-function chartColors(){
-  return {
-    grid: 'rgba(255,255,255,0.06)', text: '#a9b6ac', wheat: '#cf9f4f', wheatSoft: '#e4bf7a',
-    palette: ['#6fa287','#cf9f4f','#c1502e','#8ea3d1','#d1b06c','#7fb8c9','#b2955b', '#5c8072', '#a67246']
-  };
-}
+function chartColors(){ return { grid: 'rgba(255,255,255,0.06)', text: '#a9b6ac', wheat: '#cf9f4f', wheatSoft: '#e4bf7a', palette: ['#6fa287','#cf9f4f','#c1502e','#8ea3d1','#d1b06c','#7fb8c9','#b2955b', '#5c8072', '#a67246'] }; }
 
 function renderTrendChart(){
   const c = chartColors();
@@ -564,17 +646,8 @@ function renderTrendChart(){
   destroyChart('trend');
   charts.trend = new Chart($('trendChart'), {
     type:'line',
-    data:{ labels:dates, datasets:[{
-      label:'Total Pakan (kg)', data:dates.map(d=>byDate[d]), borderColor:c.wheatSoft, backgroundColor:'rgba(207,159,79,0.12)',
-      fill:true, tension:.35, pointRadius:3, pointBackgroundColor:c.wheat, borderWidth:2
-    }]},
-    options:{
-      responsive:true, maintainAspectRatio:true, plugins:{ legend:{display:false} },
-      scales:{
-        x:{ ticks:{color:c.text, font:{family:"'IBM Plex Mono'", size:10}}, grid:{color:c.grid} },
-        y:{ ticks:{color:c.text, font:{family:"'IBM Plex Mono'", size:10}}, grid:{color:c.grid} }
-      }
-    }
+    data:{ labels:dates, datasets:[{ label:'Total Pakan (kg)', data:dates.map(d=>byDate[d]), borderColor:c.wheatSoft, backgroundColor:'rgba(207,159,79,0.12)', fill:true, tension:.35, pointRadius:3, pointBackgroundColor:c.wheat, borderWidth:2 }]},
+    options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{display:false} }, scales:{ x:{ ticks:{color:c.text, font:{family:"'IBM Plex Mono'", size:10}}, grid:{color:c.grid} }, y:{ ticks:{color:c.text, font:{family:"'IBM Plex Mono'", size:10}}, grid:{color:c.grid} } } }
   });
 }
 
@@ -587,13 +660,7 @@ function renderIntakeChart(){
   
   phases.forEach((ph, i) => {
      if(sec === 'ALL' || sec === ph) {
-         datasets.push({
-             label: ph,
-             data: filteredIntakeRows.map(r => r['intake_'+ph]),
-             borderColor: c.palette[i % c.palette.length],
-             backgroundColor: c.palette[i % c.palette.length],
-             tension: .35, pointRadius: 2, fill: false, borderWidth:2
-         });
+         datasets.push({ label: ph, data: filteredIntakeRows.map(r => r['intake_'+ph]), borderColor: c.palette[i % c.palette.length], backgroundColor: c.palette[i % c.palette.length], tension: .35, pointRadius: 2, fill: false, borderWidth:2 });
      }
   });
 
@@ -601,14 +668,7 @@ function renderIntakeChart(){
   charts.intake = new Chart($('intakeChart'), {
     type:'line',
     data:{ labels: dates, datasets: datasets },
-    options:{
-      responsive:true, maintainAspectRatio:true,
-      plugins:{ legend:{display:true, position:'bottom', labels:{color:c.text, font:{size:11}, boxWidth: 12}} },
-      scales:{
-        x:{ ticks:{color:c.text, font:{family:"'IBM Plex Mono'", size:10}}, grid:{color:c.grid} },
-        y:{ ticks:{color:c.text, font:{family:"'IBM Plex Mono'", size:10}}, grid:{color:c.grid} }
-      }
-    }
+    options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{display:true, position:'bottom', labels:{color:c.text, font:{size:11}, boxWidth: 12}} }, scales:{ x:{ ticks:{color:c.text, font:{family:"'IBM Plex Mono'", size:10}}, grid:{color:c.grid} }, y:{ ticks:{color:c.text, font:{family:"'IBM Plex Mono'", size:10}}, grid:{color:c.grid} } } }
   });
 }
 
@@ -625,17 +685,8 @@ function renderSectionBarChart(){
   destroyChart('sectionBar');
   charts.sectionBar = new Chart($('sectionBarChart'), {
     type:'bar',
-    data:{ 
-      labels: entries.map(e=>e[0]), 
-      datasets:[{ data: entries.map(e=>e[1]), backgroundColor: c.palette, borderRadius:4 }]
-    },
-    options:{
-      responsive:true, maintainAspectRatio:true, plugins:{ legend:{display:false} },
-      scales:{
-        x:{ ticks:{color:c.text, font:{size:11}}, grid:{display:false} },
-        y:{ ticks:{color:c.text, font:{family:"'IBM Plex Mono'", size:10}}, grid:{color:c.grid} }
-      }
-    }
+    data:{ labels: entries.map(e=>e[0]), datasets:[{ data: entries.map(e=>e[1]), backgroundColor: c.palette, borderRadius:4 }] },
+    options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{display:false} }, scales:{ x:{ ticks:{color:c.text, font:{size:11}}, grid:{display:false} }, y:{ ticks:{color:c.text, font:{family:"'IBM Plex Mono'", size:10}}, grid:{color:c.grid} } } }
   });
 }
 
@@ -652,14 +703,8 @@ function renderTimeChart(){
   destroyChart('time');
   charts.time = new Chart($('timeChart'), {
     type:'doughnut',
-    data:{ 
-      labels: entries.map(e=>e[0]), 
-      datasets:[{ data: entries.map(e=>e[1]), backgroundColor: ['#e4bf7a','#6fa287','#c1502e','#8ea3d1'], borderColor: '#212c25', borderWidth:3 }]
-    },
-    options:{
-      responsive:true, maintainAspectRatio:true,
-      plugins:{ legend:{position:'bottom', labels:{color:c.text, font:{size:11}, padding:14}} }
-    }
+    data:{ labels: entries.map(e=>e[0]), datasets:[{ data: entries.map(e=>e[1]), backgroundColor: ['#e4bf7a','#6fa287','#c1502e','#8ea3d1'], borderColor: '#212c25', borderWidth:3 }] },
+    options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{position:'bottom', labels:{color:c.text, font:{size:11}, padding:14}} } }
   });
 }
 
@@ -697,16 +742,46 @@ function renderTable(){
   $('nextPage').disabled = tablePage >= totalPages-1;
 }
 
+// Fungsi Export CSV
+function exportToCSV() {
+    if(filteredRows.length === 0) return alert('Tidak ada data untuk diekspor!');
+    let csv = [];
+    let headers = ['Tanggal', 'Section Kandang', 'Shift Waktu', ...INGREDIENT_COLS, 'Total TMR (Kg)'];
+    csv.push(headers.join(','));
+    
+    // Sortir urut tanggal
+    let rows = [...filteredRows].sort((a,b) => a.date - b.date);
+    rows.forEach(r => {
+        let row = [r.dateStr, r.section, r.time];
+        INGREDIENT_COLS.forEach(col => row.push(r.raw[col] || 0));
+        row.push(r.total);
+        csv.push(row.join(','));
+    });
+    
+    let csvData = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    let url = URL.createObjectURL(csvData);
+    let link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Report_Pakan_${$('dateFrom').value}_to_${$('dateTo').value}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
 // Events
 $('refreshBtn').addEventListener('click', loadData);
 $('dateFrom').addEventListener('change', applyFiltersAndRender);
 $('dateTo').addEventListener('change', applyFiltersAndRender);
 $('sectionFilter').addEventListener('change', applyFiltersAndRender);
+$('shiftFilter').addEventListener('change', applyFiltersAndRender);
 $('searchBox').addEventListener('input', ()=>{ tablePage=0; renderTable(); });
 $('prevPage').addEventListener('click', ()=>{ if(tablePage>0){tablePage--; renderTable();} });
 $('nextPage').addEventListener('click', ()=>{ tablePage++; renderTable(); });
 $('settingsToggle').addEventListener('click', ()=> $('settingsPanel').classList.toggle('open'));
 $('applyGid').addEventListener('click', loadData);
+
+$('btnExport').addEventListener('click', exportToCSV);
+$('btnPrint').addEventListener('click', () => { window.print(); });
 
 loadData();
 </script>
