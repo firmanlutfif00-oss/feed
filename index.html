@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Silo — Feed Dashboard</title>
+<title>Silo — Feed Supervisor Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -74,7 +74,7 @@
   .panel{ background: var(--surface); border:1px solid var(--line); border-radius:16px; padding:22px; margin-bottom:22px; }
   .grid-2{ display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
   @media(max-width:900px){ .grid-2{ grid-template-columns:1fr; } }
-  canvas{ max-height:300px; }
+  canvas{ max-height:280px; }
 
   /* Ingredients Grid */
   .ingred-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 10px; }
@@ -86,7 +86,7 @@
   .ingred-card .val { font-family: var(--font-mono); font-size: 15px; color: var(--text); font-weight: 600; }
   .ingred-card .val span { font-size: 10px; color: var(--text-faint); margin-left: 2px; }
 
-  /* Table */
+  /* Table Horizontal Scroll Force */
   .table-controls{ display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; align-items:center; }
   .table-scroll{ overflow-x:auto; overflow-y:auto; max-height:460px; border-radius:10px; border:1px solid var(--line); padding-bottom:10px;}
   .table-scroll::-webkit-scrollbar { height: 10px; width: 8px;}
@@ -128,8 +128,8 @@
     <div class="brand">
       <div class="brand-mark"></div>
       <div class="brand-text">
-        <h1>Dashboard Pakan</h1>
-        <p>Live Data Google Sheets · Sistem Analitik (v8)</p>
+        <h1>Dashboard Supervisor Pakan</h1>
+        <p>Live Data Google Sheets · Sistem Analitik Terpadu (v9)</p>
       </div>
     </div>
     <div class="status-row">
@@ -164,7 +164,7 @@
   </div>
 
   <div class="settings-panel" id="settingsPanel">
-    Pastikan GID (ID Tab) di bawah ini sesuai dengan link Google Sheets Anda. GID Intake telah diperbarui!
+    Pastikan GID (ID Tab) di bawah ini sesuai dengan link Google Sheets Anda.
     <div class="row">
       <div class="field"><label>Report All</label><input type="text" id="gidReportInput" value="555405306"></div>
       <div class="field"><label>Intake/Hd</label><input type="text" id="gidIntakeInput" value="1157965826"></div>
@@ -214,24 +214,31 @@
       </div>
     </div>
 
+    <!-- Menambahkan Grid Baru untuk Populasi -->
     <div class="grid-2">
       <div class="panel">
-        <div class="section-title"><span class="num">03</span> Komparasi Usage per Section</div>
-        <canvas id="sectionBarChart"></canvas>
+        <div class="section-title"><span class="num">03</span> Tren Populasi Sapi (Ekor)</div>
+        <canvas id="popChart"></canvas>
       </div>
       <div class="panel">
-        <div class="section-title"><span class="num">04</span> Distribusi Waktu Pemberian (Shift)</div>
+        <div class="section-title"><span class="num">04</span> Komparasi Usage per Section</div>
+        <canvas id="sectionBarChart"></canvas>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <div class="section-title"><span class="num">05</span> Distribusi Waktu Pemberian (Shift)</div>
         <canvas id="timeChart"></canvas>
+      </div>
+      <div class="panel" style="overflow: hidden;">
+        <div class="section-title"><span class="num">06</span> Rekap Pemakaian Seluruh Bahan Baku (Kg)</div>
+        <div class="ingred-grid" id="allIngredientsGrid"></div>
       </div>
     </div>
 
     <div class="panel">
-      <div class="section-title"><span class="num">05</span> Rekap Pemakaian Seluruh Bahan Baku (Kg)</div>
-      <div class="ingred-grid" id="allIngredientsGrid"></div>
-    </div>
-
-    <div class="panel">
-      <div class="section-title"><span class="num">06</span> Data Log Rinci (Report All) <span style="font-size:12px; color:var(--wheat-soft); margin-left:8px; font-weight:400; padding: 2px 8px; border:1px solid var(--line); border-radius:12px;">↔ Geser tabel ke kanan</span></div>
+      <div class="section-title"><span class="num">07</span> Data Log Rinci (Report All) <span style="font-size:12px; color:var(--wheat-soft); margin-left:8px; font-weight:400; padding: 2px 8px; border:1px solid var(--line); border-radius:12px;">↔ Geser tabel ke kanan</span></div>
       <div class="table-controls">
         <input type="text" id="searchBox" placeholder="Cari section / shift / tanggal…" style="min-width:240px;">
       </div>
@@ -424,21 +431,41 @@ function processIntakeCSV(text){
   const rows = parsed.data;
   intakeDataRaw = [];
 
-  for (let i = 0; i < rows.length; i++) {
+  let popF=-1, popE=-1, popL=-1, popD=-1, popY=-1;
+  let intF=-1, intE=-1, intL=-1, intD=-1, intY=-1;
+  let headerRowIdx = -1;
+
+  for(let i=0; i<Math.min(rows.length, 6); i++){
+     let r0 = rows[i].map(c => String(c).trim().toUpperCase());
+     let r1 = (i+1 < rows.length) ? rows[i+1].map(c => String(c).trim().toUpperCase()) : [];
+
+     let popIdx = r0.findIndex(c => c.includes('POPULASI'));
+     let intIdx = r0.findIndex(c => c.includes('INTAKE'));
+
+     if(popIdx !== -1 && intIdx !== -1 && r1.includes('FRESH')) {
+         headerRowIdx = i+1;
+         popF = r1.indexOf('FRESH', popIdx); popE = r1.indexOf('EARLY', popIdx); popL = r1.indexOf('LATE', popIdx); popD = r1.indexOf('DRY', popIdx); popY = r1.indexOf('YEARLING', popIdx);
+         intF = r1.indexOf('FRESH', intIdx); intE = r1.indexOf('EARLY', intIdx); intL = r1.indexOf('LATE', intIdx); intD = r1.indexOf('DRY', intIdx); intY = r1.indexOf('YEARLING', intIdx);
+         break;
+     }
+  }
+
+  if(intF === -1) { headerRowIdx = 1; popF=10; popE=11; popL=12; popD=13; popY=14; intF=16; intE=17; intL=18; intD=19; intY=20; }
+
+  for (let i = headerRowIdx + 1; i < rows.length; i++) {
       const r = rows[i];
-      if(!r) continue;
-      
+      if(!r || r.length === 0) continue;
       const dateRaw = String(r[0]).trim();
       const dateObj = parseDate(dateRaw);
       if (!dateObj) continue;
 
-      // MODE PAKSA - STRICT: Mengabaikan Header, Langsung Ambil Index
-      // Kolom Populasi (K sampai O) = Index 10 sampai 14
-      // Kolom Intake (Q sampai U) = Index 16 sampai 20
-      let pF = parseNum(r[10]), pE = parseNum(r[11]), pL = parseNum(r[12]), pD = parseNum(r[13]), pY = parseNum(r[14]);
-      let iF = parseNum(r[16]), iE = parseNum(r[17]), iL = parseNum(r[18]), iD = parseNum(r[19]), iY = parseNum(r[20]);
+      let iF = parseNum(r[intF]), pF = parseNum(r[popF]);
+      let iE = parseNum(r[intE]), pE = parseNum(r[popE]);
+      let iL = parseNum(r[intL]), pL = parseNum(r[popL]);
+      let iD = parseNum(r[intD]), pD = parseNum(r[popD]);
+      let iY = parseNum(r[intY]), pY = parseNum(r[popY]);
 
-      if(iF === 0 && iE === 0 && iL === 0 && iD === 0 && iY === 0) continue;
+      if(iF===0 && iE===0 && iL===0 && iD===0 && iY===0 && pF===0 && pE===0) continue;
 
       intakeDataRaw.push({
           dateStr: dateRaw, date: dateObj, time: dateObj.getTime(),
@@ -533,6 +560,7 @@ function applyFiltersAndRender(){
   renderKPIs();
   renderTrendChart();
   renderIntakeChart();
+  renderPopChart();
   renderSectionBarChart();
   renderTimeChart();
   renderAllIngredients();
@@ -648,6 +676,28 @@ function renderIntakeChart(){
   });
 }
 
+// Menambahkan Chart Tren Populasi
+function renderPopChart(){
+  const c = chartColors();
+  const dates = filteredIntakeRows.map(r => r.dateStr);
+  const sec = $('sectionFilter').value;
+  const datasets = [];
+  const phases = ['FRESH', 'EARLY', 'LATE', 'DRY', 'YEARLING'];
+  
+  phases.forEach((ph, i) => {
+     if(sec === 'ALL' || sec === ph) {
+         datasets.push({ label: ph, data: filteredIntakeRows.map(r => r['pop_'+ph]), borderColor: c.palette[i % c.palette.length], backgroundColor: c.palette[i % c.palette.length], tension: .35, pointRadius: 2, fill: false, borderWidth:2 });
+     }
+  });
+
+  destroyChart('pop');
+  charts.pop = new Chart($('popChart'), {
+    type:'line',
+    data:{ labels: dates, datasets: datasets },
+    options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{display:true, position:'bottom', labels:{color:c.text, font:{size:11}, boxWidth: 12}} }, scales:{ x:{ ticks:{color:c.text, font:{family:"'IBM Plex Mono'", size:10}}, grid:{color:c.grid} }, y:{ ticks:{color:c.text, font:{family:"'IBM Plex Mono'", size:10}}, grid:{color:c.grid} } } }
+  });
+}
+
 function renderSectionBarChart(){
   const c = chartColors();
   const bySection = {};
@@ -696,7 +746,8 @@ function renderAllIngredients(){
 }
 
 function renderTable(){
-  const displayCols = ['Date','Section','Time', ...INGREDIENT_COLS, 'Total'];
+  // Kolom Populasi Ditambahkan di sini
+  const displayCols = ['Date','Section','Time','Populasi', ...INGREDIENT_COLS, 'Total'];
   $('tableHead').innerHTML = displayCols.map(c=>`<th>${c}</th>`).join('');
 
   const search = $('searchBox').value.trim().toLowerCase();
@@ -708,9 +759,20 @@ function renderTable(){
   const pageRows = rows.slice(start, start+PAGE_SIZE);
 
   $('tableBody').innerHTML = pageRows.map(r => {
+    // Mencari populasi yang cocok dengan tanggal dan section pada baris tersebut
+    let pop = 0;
+    let intakeMatch = intakeDataRaw.find(i => i.time === r.date.getTime());
+    if (intakeMatch) {
+        if(r.section === 'FRESH') pop = intakeMatch.pop_FRESH;
+        else if(r.section === 'EARLY') pop = intakeMatch.pop_EARLY;
+        else if(r.section === 'LATE') pop = intakeMatch.pop_LATE;
+        else if(r.section === 'DRY') pop = intakeMatch.pop_DRY;
+        else if(r.section === 'YEARLING') pop = intakeMatch.pop_YEARLING;
+    }
+
     let ingredTds = INGREDIENT_COLS.map(col => `<td class="num">${fmtNum(r.raw[col] || 0)}</td>`).join('');
-    return `<tr><td>${r.dateStr}</td><td>${r.section}</td><td>${r.time}</td>${ingredTds}<td class="num" style="color:var(--wheat-soft); font-weight:600;">${fmtNum(r.total)}</td></tr>`;
-  }).join('') || '<tr><td colspan="35" style="text-align:center; padding:24px; color:var(--text-faint);">Tidak ada data.</td></tr>';
+    return `<tr><td>${r.dateStr}</td><td>${r.section}</td><td>${r.time}</td><td class="num" style="color:var(--pasture); font-weight:600;">${fmtNum(pop)}</td>${ingredTds}<td class="num" style="color:var(--wheat-soft); font-weight:600;">${fmtNum(r.total)}</td></tr>`;
+  }).join('') || '<tr><td colspan="36" style="text-align:center; padding:24px; color:var(--text-faint);">Tidak ada data.</td></tr>';
 
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   $('pageInfo').textContent = `Halaman ${tablePage+1} / ${totalPages} · ${rows.length} baris`;
@@ -718,16 +780,26 @@ function renderTable(){
   $('nextPage').disabled = tablePage >= totalPages-1;
 }
 
-// Fungsi Export CSV
+// Fungsi Export CSV yang menyertakan Populasi
 function exportToCSV() {
     if(filteredRows.length === 0) return alert('Tidak ada data untuk diekspor!');
     let csv = [];
-    let headers = ['Tanggal', 'Section Kandang', 'Shift Waktu', ...INGREDIENT_COLS, 'Total TMR (Kg)'];
+    let headers = ['Tanggal', 'Section Kandang', 'Shift Waktu', 'Populasi (Ekor)', ...INGREDIENT_COLS, 'Total TMR (Kg)'];
     csv.push(headers.join(','));
     
     let rows = [...filteredRows].sort((a,b) => a.date - b.date);
     rows.forEach(r => {
-        let row = [r.dateStr, r.section, r.time];
+        let pop = 0;
+        let intakeMatch = intakeDataRaw.find(i => i.time === r.date.getTime());
+        if (intakeMatch) {
+            if(r.section === 'FRESH') pop = intakeMatch.pop_FRESH;
+            else if(r.section === 'EARLY') pop = intakeMatch.pop_EARLY;
+            else if(r.section === 'LATE') pop = intakeMatch.pop_LATE;
+            else if(r.section === 'DRY') pop = intakeMatch.pop_DRY;
+            else if(r.section === 'YEARLING') pop = intakeMatch.pop_YEARLING;
+        }
+
+        let row = [r.dateStr, r.section, r.time, pop];
         INGREDIENT_COLS.forEach(col => row.push(r.raw[col] || 0));
         row.push(r.total);
         csv.push(row.join(','));
